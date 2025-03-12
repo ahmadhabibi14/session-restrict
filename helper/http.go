@@ -2,7 +2,7 @@ package helper
 
 import (
 	"errors"
-	"session-restrict/src/app/logger"
+	"session-restrict/src/lib/logger"
 
 	"github.com/gofiber/fiber/v2"
 )

@@ -1,1 +1,5 @@
 .env
+_docker
+tmp
+main
+logs

@@ -13,7 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var BaseDir string = `web-api-docs`
+var BaseDir string = `session-restrict`
 
 func init() {
 	fullPath, err := os.Getwd()
@@ -32,6 +32,8 @@ const (
 type Logger struct {
 	logger *logrus.Logger
 }
+
+var Log *Logger
 
 func (l *Logger) GetLogger() *logrus.Logger {
 	return l.logger
@@ -197,8 +199,6 @@ func (l *Logger) Panic(panic any, msg string) {
 		l.logger.WithField(logFieldStck, stack).Panic(panic)
 	}
 }
-
-var Log *Logger
 
 func InitLogger() {
 	logger := logrus.New()

@@ -1,0 +1,22 @@
+services:
+  redis:
+    image: redis:8.0-M02-alpine
+    container_name: sessrtric-redis
+    ports:
+      - target: "6379"
+        published: "${REDIS_PORT}"
+    volumes:
+      - ./_docker/redis:/data
+  postgres:
+    image: postgres:16.6-alpine3.20
+    container_name: sessrtric-postgres
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB}"
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+    ports:
+      - target: "${POSTGRES_PORT}"
+        published: "${POSTGRES_PORT}"
+    volumes:
+      - ./_docker/postgres:/var/lib/postgresql/data
+    command: ["-p", "${POSTGRES_PORT}"]

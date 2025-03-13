@@ -41,6 +41,9 @@
     return event;
   }
 
+  const EventNewSession     = "new_session";
+  const EventSessionRemoved = "session_removed";
+
   async function fetchSSE() {
     const response = await await fetch("/api/notification/user", {
       method: "GET",
@@ -63,7 +66,20 @@
 
           const respJson = parseSSEMessage(resp);
 
-          console.log(respJson);
+          if (respJson.event) {
+            const event = (respJson.event);
+            switch (event) {
+              case EventNewSession:
+              const sess = /** @type {Session} */ (respJson.data);
+
+              const elmSessionsContainer = document.getElementById("sessions-container");
+              const elmSessionContainer = document.createElement("div");
+              elmSessionContainer.classList.add("session-container");
+              elmSessionContainer.id = `session-${sess.access_token}`
+              elmSessionContainer.innerHTML = generateHtmlSession(sess);
+              elmSessionsContainer.appendChild(elmSessionContainer);
+            }
+          }
         })
         .catch(async (err) => {
           console.error(err);
@@ -95,6 +111,154 @@
   let sessions = /** @type {Session[]} */ ([]);
 
   /**
+   * @param {Session} sess
+   * @returns {string}
+   */
+  function generateHtmlSession(sess) {
+    let htmlStr = `<div class="flex flex-col gap-3">
+          <div class="w-full">
+            <div class="p-1.5 min-w-full inline-block align-middle">
+              <div class="overflow-hidden">
+                <table class="min-w-full divide-y divide-neutral-200">
+                  <thead>
+                    <tr>
+                      <th
+                        scope="col"
+                        colspan="2"
+                        class="px-4 py-2 text-sm text-center font-medium text-neutral-500 uppercase"
+                      >
+                        Details
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbody" class="divide-y divide-neutral-200 text-sm">
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        Access Token
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        ${sess.access_token}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        User ID
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        #${sess.user_id}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        Role
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap capital">
+                        ${sess.role}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        IP Address
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        ${sess.ip_v4}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        Device
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap capital">
+                        ${sess.device}, ${sess.os}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        Approved
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        <span class="badge-${Boolean(sess.approved) ? 'true' : 'false'}">${sess.approved}</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        Created At
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        ${dateFormatted(sess.created_at)}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        Updated At
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        ${dateFormatted(sess.updated_at)}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        Expired At
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        ${dateFormatted(sess.expired_at)}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>`;
+
+    if (Boolean(sess.approved)) {
+      htmlStr += generateHtmlSessionActionsApproved(sess);
+    } else {
+      htmlStr += generateHtmlSessionActionsUnapproved(sess);
+    }
+
+    return htmlStr;
+  }
+
+  /**
+   * @param {Session} sess
+   * @returns {string}
+   */
+  function generateHtmlSessionActionsApproved(sess) {
+    return `
+        <div id="actions-${sess.access_token}" class="flex flex-row gap-2 justify-end px-3 pb-4">
+          <button
+            onclick="deleteSession('${sess.access_token}', ${sess.user_id}, '${sess.role}')"
+            class="py-2 px-4 rounded-full bg-red-600 hover:bg-red-500 text-white"
+          >
+            Delete
+          </button>
+        </div>`;
+  }
+
+  /**
+   * @param {Session} sess
+   * @returns {string}
+   */
+  function generateHtmlSessionActionsUnapproved(sess) {
+    return `
+      <div id="actions-${sess.access_token}" class="flex flex-row gap-2 justify-end px-3 pb-4">
+        <button
+          onclick="deleteSession('${sess.access_token}', ${sess.user_id}, '${sess.role}')"
+          class="py-2 px-4 rounded-full text-blue-600 hover:text-blue-500 font-semibold"
+        >
+          Delete
+        </button>
+        <button
+          onclick="approveSession('${sess.access_token}', ${sess.user_id}, '${sess.role}')"
+          class="py-2 px-4 rounded-full bg-blue-600 hover:bg-blue-500 text-white"
+        >
+          Approve
+        </button>
+      </div>`;
+  }
+
+  /**
    * @param {Session[]} sessions
    */
   function renderSessions(sessions) {
@@ -109,226 +273,73 @@
     for (const sess of sessions || []) {
       const elmSessionContainer = document.createElement("div");
       elmSessionContainer.classList.add("session-container");
-
-      if (sess.approved) {
-        elmSessionContainer.innerHTML = `
-        <div class="flex flex-col gap-3">
-          <div class="w-full">
-            <div class="p-1.5 min-w-full inline-block align-middle">
-              <div class="overflow-hidden">
-                <table class="min-w-full divide-y divide-neutral-200">
-                  <thead>
-                    <tr>
-                      <th
-                        scope="col"
-                        colspan="2"
-                        class="px-4 py-2 text-sm text-center font-medium text-neutral-500 uppercase"
-                      >
-                        Details
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody id="tbody" class="divide-y divide-neutral-200 text-sm">
-                    <tr>
-                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                        Access Token
-                      </td>
-                      <td class="px-4 py-2 whitespace-nowrap">
-                        ${sess.access_token}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                        User ID
-                      </td>
-                      <td class="px-4 py-2 whitespace-nowrap">
-                        #${sess.user_id}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                        Role
-                      </td>
-                      <td class="px-4 py-2 whitespace-nowrap capital">
-                        ${sess.role}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                        IP Address
-                      </td>
-                      <td class="px-4 py-2 whitespace-nowrap">
-                        ${sess.ip_v4}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                        Device
-                      </td>
-                      <td class="px-4 py-2 whitespace-nowrap capital">
-                        ${sess.device}, ${sess.os}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                        Approved
-                      </td>
-                      <td class="px-4 py-2 whitespace-nowrap">
-                        ${sess.approved}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                        Created At
-                      </td>
-                      <td class="px-4 py-2 whitespace-nowrap">
-                        ${dateFormatted(sess.created_at)}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                        Updated At
-                      </td>
-                      <td class="px-4 py-2 whitespace-nowrap">
-                        ${dateFormatted(sess.updated_at)}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                        Expired At
-                      </td>
-                      <td class="px-4 py-2 whitespace-nowrap">
-                        ${dateFormatted(sess.expired_at)}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="flex flex-row gap-2 justify-end px-3 pb-4">
-          <button
-            class="py-2 px-4 rounded-full bg-red-600 hover:bg-red-500 text-white"
-          >
-            Remove
-          </button>
-        </div>`;
-
-        elmSessionsContainer.appendChild(elmSessionContainer);
-        continue;
-      }
-
-      elmSessionContainer.innerHTML = `<div class="flex flex-col gap-3">
-          <div class="w-full">
-            <div class="p-1.5 min-w-full inline-block align-middle">
-              <div class="overflow-hidden">
-                <table class="min-w-full divide-y divide-neutral-200">
-                  <thead>
-                    <tr>
-                      <th
-                        scope="col"
-                        colspan="2"
-                        class="px-4 py-2 text-sm text-center font-medium text-neutral-500 uppercase"
-                      >
-                        Details
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody id="tbody" class="divide-y divide-neutral-200 text-sm">
-                    <tr>
-                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                        Access Token
-                      </td>
-                      <td class="px-4 py-2 whitespace-nowrap">
-                        ${sess.access_token}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                        User ID
-                      </td>
-                      <td class="px-4 py-2 whitespace-nowrap">
-                        #${sess.user_id}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                        Role
-                      </td>
-                      <td class="px-4 py-2 whitespace-nowrap capital">
-                        ${sess.role}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                        IP Address
-                      </td>
-                      <td class="px-4 py-2 whitespace-nowrap">
-                        ${sess.ip_v4}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                        Device
-                      </td>
-                      <td class="px-4 py-2 whitespace-nowrap capital">
-                        ${sess.device}, ${sess.os}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                        Approved
-                      </td>
-                      <td class="px-4 py-2 whitespace-nowrap">
-                        ${sess.approved}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                        Created At
-                      </td>
-                      <td class="px-4 py-2 whitespace-nowrap">
-                        ${dateFormatted(sess.created_at)}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                        Updated At
-                      </td>
-                      <td class="px-4 py-2 whitespace-nowrap">
-                        ${dateFormatted(sess.updated_at)}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                        Expired At
-                      </td>
-                      <td class="px-4 py-2 whitespace-nowrap">
-                        ${dateFormatted(sess.expired_at)}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="flex flex-row gap-2 justify-end px-3 pb-4">
-          <button
-            class="py-2 px-4 rounded-full text-blue-600 hover:text-blue-500 font-semibold"
-          >
-            Reject
-          </button>
-          <button
-            class="py-2 px-4 rounded-full bg-blue-600 hover:bg-blue-500 text-white"
-          >
-            Approve
-          </button>
-        </div>`;
+      elmSessionContainer.id = `session-${sess.access_token}`
+      elmSessionContainer.innerHTML = generateHtmlSession(sess);
 
       elmSessionsContainer.appendChild(elmSessionContainer);
     }
+  }
+
+  /**
+   * @param {string} accessToken
+   * @param {number} userId
+   * @param {string} role
+   */
+  async function approveSession(accessToken, userId, role) {
+    await fetch("/api/sessions/approve", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        access_token: accessToken,
+        user_id: userId,
+        role: role,
+      }),
+    }).then(async (res) => {
+      if (res.status !== 200) {
+        console.error(res);
+        return;
+      }
+      const resJson = await res.json();
+      const resData = /** @type {Session} */ (resJson.data);
+
+      const elmSessionContainer = document.getElementById(`session-${resData.access_token}`);
+      elmSessionContainer.innerHTML = generateHtmlSession(resData); 
+    }).catch(err => {
+      console.error(err);
+    });
+  }
+
+  /**
+   * @param {string} accessToken
+   * @param {number} userId
+   * @param {string} role
+   */
+  async function deleteSession(accessToken, userId, role) {
+    await fetch("/api/sessions/delete", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        access_token: accessToken,
+        user_id: userId,
+        role: role,
+      }),
+    }).then(async (res) => {
+      if (res.status !== 200) {
+        console.error(res);
+        return;
+      }
+      const resJson = await res.json();
+      console.log("Response: ", resJson);
+
+      const elmSessionContainer = document.getElementById(`session-${accessToken}`);
+      elmSessionContainer.remove();
+    }).catch(err => {
+      console.error(err);
+    });
   }
 
   async function fetchSessions() {

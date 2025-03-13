@@ -30,3 +30,11 @@ html {
 .capital {
   text-transform: capitalize;
 }
+
+.badge-true {
+  @apply text-xs py-1.5 px-3 bg-emerald-400/20 text-emerald-600 rounded-full;
+}
+
+.badge-false {
+  @apply text-xs py-1.5 px-3 bg-amber-400/20 text-amber-600 rounded-full;
+}

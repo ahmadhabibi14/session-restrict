@@ -3,6 +3,8 @@ package controller
 import (
 	"fmt"
 	"net/http"
+	"session-restrict/helper"
+	"session-restrict/src/dto/request"
 	"session-restrict/src/dto/response"
 	"session-restrict/src/lib/logger"
 	"session-restrict/src/repo/sessions"
@@ -24,16 +26,54 @@ func NewSession(app *fiber.App, srvSession *service.Session) {
 	app.Route("/api/sessions", func(router fiber.Router) {
 		router.Get("/", mustLoggedInAjax, handler.GetSessions)
 		router.Patch("/approve", mustLoggedInAjax, handler.Approve)
-		router.Patch("/reject", mustLoggedInAjax, handler.Reject)
+		router.Patch("/delete", mustLoggedInAjax, handler.Delete)
 	})
 }
 
 func (a *Session) Approve(c *fiber.Ctx) error {
-	return c.SendStatus(http.StatusOK)
+	in, err := helper.ReadBody[request.ReqSessionApprove](c)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(response.ResponseCommon{
+			StatusCode: http.StatusBadRequest,
+			Error:      err.Error(),
+		})
+	}
+
+	out, err := a.srvSession.Approve(in)
+	if err != nil {
+		return c.Status(out.StatusCode).JSON(response.ResponseCommon{
+			StatusCode: out.StatusCode,
+			Error:      err.Error(),
+		})
+	}
+
+	out.SetMessage(`Session Approved !`)
+	out.SetStatus(http.StatusOK)
+
+	return c.Status(http.StatusOK).JSON(out)
 }
 
-func (a *Session) Reject(c *fiber.Ctx) error {
-	return c.SendStatus(http.StatusOK)
+func (a *Session) Delete(c *fiber.Ctx) error {
+	in, err := helper.ReadBody[request.ReqSessionDelete](c)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(response.ResponseCommon{
+			StatusCode: http.StatusBadRequest,
+			Error:      err.Error(),
+		})
+	}
+
+	out, err := a.srvSession.Delete(in)
+	if err != nil {
+		return c.Status(out.StatusCode).JSON(response.ResponseCommon{
+			StatusCode: out.StatusCode,
+			Error:      err.Error(),
+		})
+	}
+
+	out.SetMessage(`Session Deleted !`)
+	out.SetStatus(http.StatusOK)
+
+	return c.Status(http.StatusOK).JSON(out)
 }
 
 func (a *Session) GetSessions(c *fiber.Ctx) error {

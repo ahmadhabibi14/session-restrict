@@ -105,7 +105,7 @@ func (s *Session) Approve(key string) (Session, error) {
 		return sess, Err400SessionNotFound
 	}
 
-	err = json.Unmarshal([]byte(sessString), s)
+	err = json.Unmarshal([]byte(sessString), &sess)
 	if err != nil {
 		logger.Log.Error(err)
 		return sess, Err500FailedGetSession

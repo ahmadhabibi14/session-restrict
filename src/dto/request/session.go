@@ -6,7 +6,7 @@ type ReqSessionApprove struct {
 	Role        string `json:"role" validate:"required"`
 }
 
-type ReqSessionReject struct {
+type ReqSessionDelete struct {
 	AccessToken string `json:"access_token" validate:"required"`
 	UserId      uint64 `json:"user_id" validate:"required"`
 	Role        string `json:"role" validate:"required"`

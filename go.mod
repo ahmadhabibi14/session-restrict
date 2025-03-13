@@ -16,6 +16,7 @@ require (
 	github.com/mssola/useragent v1.0.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/valyala/fasthttp v1.51.0
+	github.com/wneessen/go-mail v0.6.2
 	golang.org/x/crypto v0.36.0
 )
 

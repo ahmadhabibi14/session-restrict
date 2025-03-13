@@ -9,10 +9,5 @@ type ResGetSessionsByUserId struct {
 
 type ResSessionApprove struct {
 	ResponseCommon
-	Data *[]sessions.Session `json:"data"`
-}
-
-type ResSessionReject struct {
-	ResponseCommon
-	Data *[]sessions.Session `json:"data"`
+	Data *sessions.Session `json:"data"`
 }

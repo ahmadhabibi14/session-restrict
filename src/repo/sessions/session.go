@@ -19,14 +19,16 @@ const (
 )
 
 type Session struct {
-	UserId    uint64 `json:"user_id"`
-	Role      string `json:"role"`
-	IpV4      string `json:"ip_v4"`
-	IpV6      string `json:"ip_v6"`
-	UserAgent string `json:"user_agent"`
-	Device    string `json:"device"`
-	OS        string `json:"os"`
-	Approved  bool   `json:"approved"`
+	UserId    uint64    `json:"user_id"`
+	Role      string    `json:"role"`
+	IpV4      string    `json:"ip_v4"`
+	IpV6      string    `json:"ip_v6"`
+	UserAgent string    `json:"user_agent"`
+	Device    string    `json:"device"`
+	OS        string    `json:"os"`
+	Approved  bool      `json:"approved"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 var (

@@ -79,6 +79,8 @@ func (a *Auth) SignIn(in request.ReqAuthSignIn) (out response.ResAuthSignIn, err
 			Device:    in.Device,
 			OS:        in.OS,
 			Approved:  !exist,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		}, usr.Role, usr.Id, sessDuration,
 	)
 	if err != nil {

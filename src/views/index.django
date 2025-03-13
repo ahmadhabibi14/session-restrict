@@ -87,6 +87,8 @@
     * @property {string} role - The role of the user (e.g., "user").
     * @property {string} user_agent - The user agent string from the browser.
     * @property {number} user_id - The unique identifier of the user.
+    * @property {string} created_at
+    * @property {string} updated_at
     */
   
   let sessions = /** @type {Session[]} */ ([]);
@@ -160,10 +162,18 @@
                     </tr>
                     <tr>
                       <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                        Timestamp
+                        Created At
                       </td>
                       <td class="px-4 py-2 whitespace-nowrap">
-                        ${dateFormatted(new Date())}
+                        ${dateFormatted(sess.created_at)}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        Updated At
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        ${dateFormatted(sess.updated_at)}
                       </td>
                     </tr>
                     <tr>
@@ -251,10 +261,18 @@
                     </tr>
                     <tr>
                       <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                        Timestamp
+                        Created At
                       </td>
                       <td class="px-4 py-2 whitespace-nowrap">
-                        ${dateFormatted(new Date())}
+                        ${dateFormatted(sess.created_at)}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        Updated At
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        ${dateFormatted(sess.updated_at)}
                       </td>
                     </tr>
                     <tr>

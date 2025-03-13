@@ -1,100 +1,28 @@
-<div class="flex flex-col justify-center items-center w-5/12 mx-auto">
+<div class="flex flex-col justify-center items-center w-full mx-auto">
   <div class="flex flex-col gap-6 w-fit">
     <h1 class="text-3xl font-bold text-center">Session Restriction</h1>
-    <div
-      class="text-sm flex flex-col gap-5 rounded-xl border shadow p-6 w-full h-fit"
-    >
-      <div class="flex flex-col gap-3">
-        <h4 class="text-xl font-bold">
-          ⚠️ Peringatan: Aktivitas Login Tidak Dikenal
-        </h4>
-        <div class="w-full">
-          <div class="p-1.5 min-w-full inline-block align-middle border rounded-md">
-            <div class="overflow-hidden">
-              <table class="min-w-full divide-y divide-neutral-200">
-                <thead>
-                  <tr>
-                    <th
-                      scope="col"
-                      colspan="2"
-                      class="px-4 py-2 text-sm text-center font-medium text-neutral-500 uppercase"
-                    >
-                      Detail
-                    </th>
-                  </tr>
-                </thead>
-                <tbody id="tbody" class="divide-y divide-neutral-200 text-sm">
-                  <tr>
-                    <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                      Access Token
-                    </td>
-                    <td class="px-4 py-2 whitespace-nowrap">
-                      zOBk5nMeOlgA0jaCz3Hy
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                      User ID
-                    </td>
-                    <td class="px-4 py-2 whitespace-nowrap">
-                      #1
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                      Role
-                    </td>
-                    <td class="px-4 py-2 whitespace-nowrap">
-                      User
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                      Waktu
-                    </td>
-                    <td class="px-4 py-2 whitespace-nowrap">
-                      03 Mar 2025, 11:16:28
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                      Perangkat
-                    </td>
-                    <td class="px-4 py-2 whitespace-nowrap">
-                      Mobile, Android 10
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                      IP Address
-                    </td>
-                    <td class="px-4 py-2 whitespace-nowrap">
-                      162.158.163.128
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="flex flex-row gap-2 justify-end">
-        <button
-          class="py-2 px-4 rounded-full text-blue-600 hover:text-blue-500 font-semibold"
-        >
-          Bukan saya
-        </button>
-        <button
-          class="py-2 px-4 rounded-full bg-blue-600 hover:bg-blue-500 text-white"
-        >
-          Ya, itu saya
-        </button>
-      </div>
+    <div id="sessions-container" class="grid grid-cols-3 gap-5">
+      <p>No Sessions</p>
     </div>
   </div>
 </div>
 
 <script>
+  function dateFormatted(dateString) {
+    const date = new Date(dateString);
+    const formattedDate = date.toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false, // Use 24-hour format
+    });
+
+    return formattedDate;
+  }
+
   function parseSSEMessage(message) {
     const lines = message.split("\n");
     const event = {};
@@ -147,6 +75,227 @@
     }
   }
 
+  /**
+    * @typedef {Object} Session
+    * @property {string} access_token - The access token for the session.
+    * @property {boolean} approved - Indicates whether the session is approved.
+    * @property {string} device - The type of device used (e.g., "desktop").
+    * @property {string} ip_v4 - The IPv4 address of the user.
+    * @property {string} ip_v6 - The IPv6 address of the user.
+    * @property {string} key - The unique session key.
+    * @property {string} os - The operating system of the device.
+    * @property {string} role - The role of the user (e.g., "user").
+    * @property {string} user_agent - The user agent string from the browser.
+    * @property {number} user_id - The unique identifier of the user.
+    */
+  
+  let sessions = /** @type {Session[]} */ ([]);
+
+  /**
+   * @param {Session[]} sessions
+   */
+  function renderSessions(sessions) {
+    console.log(sessions);
+
+    const elmSessionsContainer = document.getElementById("sessions-container");
+    
+    if (sessions && sessions.length) {
+      elmSessionsContainer.innerHTML = ``;
+    }
+
+    for (const sess of (sessions || [])) {
+      const elmSessionContainer = document.createElement("div");
+      elmSessionContainer.classList.add("session-container");
+
+      if (sess.approved) {
+        elmSessionContainer.innerHTML = `
+        <div class="flex flex-col gap-3">
+          <div class="w-full">
+            <div class="p-1.5 min-w-full inline-block align-middle">
+              <div class="overflow-hidden">
+                <table class="min-w-full divide-y divide-neutral-200">
+                  <thead>
+                    <tr>
+                      <th
+                        scope="col"
+                        colspan="2"
+                        class="px-4 py-2 text-sm text-center font-medium text-neutral-500 uppercase"
+                      >
+                        Details
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbody" class="divide-y divide-neutral-200 text-sm">
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        Access Token
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        ${sess.access_token}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        User ID
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        #${sess.user_id}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        Role
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        ${String(sess.role).toUpperCase()}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        Approved
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        ${sess.approved}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        Timestamp
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        ${dateFormatted(new Date())}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        Device
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        ${sess.device}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        IP Address
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        ${sess.ip_v4}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex flex-row gap-2 justify-end px-3 pb-4">
+          <button
+            class="py-2 px-4 rounded-full bg-red-600 hover:bg-red-500 text-white"
+          >
+            Remove
+          </button>
+        </div>`
+
+        elmSessionsContainer.appendChild(elmSessionContainer);
+        continue;
+      }
+
+      elmSessionContainer.innerHTML = `<div class="flex flex-col gap-3">
+          <div class="w-full">
+            <div class="p-1.5 min-w-full inline-block align-middle">
+              <div class="overflow-hidden">
+                <table class="min-w-full divide-y divide-neutral-200">
+                  <thead>
+                    <tr>
+                      <th
+                        scope="col"
+                        colspan="2"
+                        class="px-4 py-2 text-sm text-center font-medium text-neutral-500 uppercase"
+                      >
+                        Details
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbody" class="divide-y divide-neutral-200 text-sm">
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        Access Token
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        ${sess.access_token}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        User ID
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        #${sess.user_id}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        Role
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        ${sess.role}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        Approved
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        ${sess.approved}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        Timestamp
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        ${dateFormatted(new Date())}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        Device
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        ${sess.device}, ${sess.os}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        IP Address
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        ${sess.ip_v4}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex flex-row gap-2 justify-end px-3 pb-4">
+          <button
+            class="py-2 px-4 rounded-full text-blue-600 hover:text-blue-500 font-semibold"
+          >
+            Reject
+          </button>
+          <button
+            class="py-2 px-4 rounded-full bg-blue-600 hover:bg-blue-500 text-white"
+          >
+            Approve
+          </button>
+        </div>`
+
+        elmSessionsContainer.appendChild(elmSessionContainer);
+    }
+  }
+
   async function fetchSessions() {
     await fetch("/api/sessions", {
       method: "GET",
@@ -154,9 +303,11 @@
         "Content-Type": "application/json"
       }
     }).then(async (res) => {
-      const data = await res.json();
-
-      console.log(data);
+      const dataJson = await res.json();
+      
+      if (dataJson.data) {
+        renderSessions(dataJson.data);
+      }
     }).catch(err => {
       console.error(err);
     })

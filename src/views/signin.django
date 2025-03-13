@@ -3,12 +3,12 @@
     class="w-[500px] h-fit shadow-md rounded-xl p-6 my-16 mx-4 bg-white border-neutral-300 flex flex-col gap-6"
   >
     <div
-      id="error-login"
+      id="error-signin"
       class="text-sm hidden flex-row items-center justify-between gap-2 rounded-md border border-red-500 bg-red-400/20 text-red-600 py-3 px-4 w-full h-fit"
     >
       <p class="line-clamp-1" id="error-message"></p>
       <button
-        onclick="document.getElementById('error-login').style.display = 'none'"
+        onclick="document.getElementById('error-signin').style.display = 'none'"
         class="flex justify-center items-center w-fit h-fit"
       >
         <svg
@@ -90,7 +90,7 @@
         </div>
       </div>
       <button
-        id="submit-login"
+        id="submit-signin"
         onclick="submitLogin()"
         class="w-full font-bold py-2.5 px-4 rounded-md bg-sky-600 hover:bg-sky-500 disabled:bg-sky-500 disabled:cursor-not-allowed text-white"
       >
@@ -98,7 +98,7 @@
       </button>
       <p class="text-sm text-center">
         <span>Have no account ?</span>
-        <a href="/register" class="text-sky-600 hover:text-sky-500 underline"
+        <a href="/signup" class="text-sky-600 hover:text-sky-500 underline"
           >Sign Up</a
         >
       </p>
@@ -124,7 +124,7 @@
   }
 
   async function submitLogin() {
-    const submitLoginElm = document.getElementById("submit-login");
+    const submitLoginElm = document.getElementById("submit-signin");
 
     submitLoginElm.disabled = true;
     submitLoginElm.innerText = "Logging in...";
@@ -152,23 +152,23 @@
 
           submitLoginElm.disabled = false;
           submitLoginElm.innerText = "Sign In";
-          const errorElm = document.getElementById("error-login");
+          const errorElm = document.getElementById("error-signin");
           errorElm.style.display = "flex";
 
           console.log("respjson:", respJson);
           const errMsgElm = document.getElementById("error-message");
-          errMsgElm.innerText = respJson.error || "login failed !!";
+          errMsgElm.innerText = respJson.error || "signin failed !!";
         }
       })
       .catch((err) => {
         console.error(err);
         submitLoginElm.disabled = false;
         submitLoginElm.innerText = "Sign In";
-        const errorElm = document.getElementById("error-login");
+        const errorElm = document.getElementById("error-signin");
         errorElm.style.display = "flex";
 
         const errMsgElm = document.getElementById("error-message");
-        errMsgElm.innerText = "login failed !!";
+        errMsgElm.innerText = "signin failed !!";
       });
   }
 </script>

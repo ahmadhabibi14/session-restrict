@@ -22,3 +22,7 @@ html {
 .content {
   @apply min-h-[110dvh] max-h-fit w-full px-4 md:px-5 md:py-6 py-4;
 }
+
+.session-container {
+  @apply text-sm flex flex-col gap-5 rounded-xl border shadow p-1 w-full h-fit;
+}

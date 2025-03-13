@@ -1,3 +1,236 @@
-<div>
-  Sign Up
+<div class="flex w-full h-full justify-center">
+  <section
+    class="w-[500px] h-fit shadow-md rounded-xl p-6 my-16 mx-4 bg-white border-neutral-300 flex flex-col gap-6"
+  >
+    <div
+      id="error-signup"
+      class="text-sm hidden flex-row items-center justify-between gap-2 rounded-md border border-red-500 bg-red-400/20 text-red-600 py-3 px-4 w-full h-fit"
+    >
+      <p class="line-clamp-3" id="error-message"></p>
+      <button
+        onclick="document.getElementById('error-signup').style.display = 'none'"
+        class="flex justify-center items-center w-fit h-fit"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="w-4 h-4"
+        >
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div
+      id="success-signup"
+      class="text-sm hidden flex-row items-center justify-between gap-2 rounded-md border border-emerald-500 bg-emerald-400/20 text-emerald-600 py-3 px-4 w-full h-fit"
+    >
+      <p class="line-clamp-3" id="success-message"></p>
+      <button
+        onclick="document.getElementById('success-signup').style.display = 'none'"
+        class="flex justify-center items-center w-fit h-fit"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="w-4 h-4"
+        >
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="flex flex-col gap-7">
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-2">
+          <label for="email" class="text-sm text-zinc-600 ml-2">
+            <span>Email</span>
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="jon@stevorexpress.com"
+            class="bg-white rounded-md w-full border border-zinc-300 py-2 caret-sky-600 focus:border-sky-600 focus:outline focus:outline-sky-600 px-4"
+          />
+        </div>
+        <div class="flex flex-col gap-2">
+          <label for="full-name" class="text-sm text-zinc-600 ml-2">
+            <span>Full Name</span>
+          </label>
+          <input
+            type="full-name"
+            id="full-name"
+            name="full-name"
+            placeholder="John Doe"
+            class="bg-white rounded-md w-full border border-zinc-300 py-2 caret-sky-600 focus:border-sky-600 focus:outline focus:outline-sky-600 px-4"
+          />
+        </div>
+        <div class="flex flex-col gap-2">
+          <label for="role" class="text-sm text-zinc-600 ml-2">
+            <span>Role</span>
+          </label>
+          <select
+            name="role"
+            id="role"
+            value="user"
+            class="bg-white rounded-md w-full border border-zinc-300 py-2 caret-sky-600 focus:border-sky-600 focus:outline focus:outline-sky-600 px-4"
+          >
+            <option value="admin">Admin</option>
+            <option value="user" selected>User</option>
+            <option value="driver">Driver</option>
+          </select>
+        </div>
+        <div class="flex flex-col gap-2 relative">
+          <label for="password" class="text-sm text-zinc-600 ml-2">
+            <span>Password</span>
+          </label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="secret1234"
+            class="bg-white rounded-md w-full border border-zinc-300 py-2 caret-sky-600 focus:border-sky-600 focus:outline focus:outline-sky-600 pl-4 pr-10"
+          />
+          <button
+            onclick="toggleShowPassword()"
+            class="absolute right-3 top-10 cursor-pointer"
+            title="Show/Hide Password"
+          >
+            <svg
+              id="eye"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="w-5 h-5"
+            >
+              <path
+                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+              ></path>
+              <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>
+            <svg
+              id="eye-off"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="w-5 h-5 hidden"
+            >
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <button
+        id="submit-signup"
+        onclick="submitRegister()"
+        class="w-full font-bold py-2.5 px-4 rounded-md bg-sky-600 hover:bg-sky-500 disabled:bg-sky-500 disabled:cursor-not-allowed text-white"
+      >
+        Sign Up
+      </button>
+      <p class="text-sm text-center">
+        <span>Already have account ?</span>
+        <a href="/signin" class="text-sky-600 hover:text-sky-500 underline"
+          >Sign In</a
+        >
+      </p>
+    </div>
+  </section>
 </div>
+
+<script>
+  function toggleShowPassword() {
+    const password = document.getElementById("password");
+    const eye = document.getElementById("eye");
+    const eyeOff = document.getElementById("eye-off");
+
+    if (password.type === "password") {
+      password.type = "text";
+      eye.style.display = "none";
+      eyeOff.style.display = "block";
+    } else {
+      password.type = "password";
+      eye.style.display = "block";
+      eyeOff.style.display = "none";
+    }
+  }
+
+  async function submitRegister() {
+    const submitRegisterElm = document.getElementById("submit-signup");
+
+    submitRegisterElm.disabled = true;
+    submitRegisterElm.innerText = "Register...";
+
+    const email = document.getElementById("email").value;
+    const full_name = document.getElementById("full-name").value;
+    const role = document.getElementById("role").value;
+    const password = document.getElementById("password").value;
+
+    await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: email,
+        full_name: full_name,
+        role: role,
+        password: password,
+      }),
+    })
+      .then(async (res) => {
+        if (res.status === 200) {
+          const respJson = await res.json();
+
+          const successElm = document.getElementById("success-signup");
+          successElm.style.display = "flex";
+
+          console.log("respjson:", respJson);
+          const successMsgElm = document.getElementById("success-message");
+          successMsgElm.innerText =
+            respJson.message ||
+            "Register successfully, please wait for approval from admin !";
+        } else {
+          const respJson = await res.json();
+
+          submitRegisterElm.disabled = false;
+          submitRegisterElm.innerText = "Register";
+          const errorElm = document.getElementById("error-signup");
+          errorElm.style.display = "flex";
+
+          console.log("respjson:", respJson);
+          const errMsgElm = document.getElementById("error-message");
+          errMsgElm.innerText = respJson.error || "login failed !!";
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        submitRegisterElm.disabled = false;
+        submitRegisterElm.innerText = "Register";
+        const errorElm = document.getElementById("error-signup");
+        errorElm.style.display = "flex";
+
+        const errMsgElm = document.getElementById("error-message");
+        errMsgElm.innerText = "login failed !!";
+      });
+  }
+</script>

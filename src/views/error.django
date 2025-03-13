@@ -1,29 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="{{ CSP }}" />
-  <link rel="icon" type="image/png" href="/assets/favicon.png" />
-  <title>{{ Title }}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="/assets/css/output.css" />
-</head>
-<body class="bg-neutral-100 text-neutral-900 w-full min-h-screen h-screen top-0 bottom-0 right-0 left-0">
-  <main class="flex w-full h-full justify-center items-center text-center">
-    <div class="bg-white mx-4 py-5 px-8 border border-neutral-300 rounded-md flex flex-col gap-5">
-      <h1 class="text-2xl md:text-4xl font-bold">{{ Title }}</h1>
-      <p>{{ Description }}</p>
-      <div class="w-full flex justify-center items-center">
-        <a href="/" class="bg-sky-600 hover:bg-sky-500 py-2 px-5 rounded-full text-white">Back To Home</a>
-      </div>
+<main class="flex w-full h-full justify-center items-center text-center">
+  <div
+    class="bg-white mx-4 py-5 px-8 border border-neutral-300 rounded-md flex flex-col gap-5"
+  >
+    <h1 class="text-2xl md:text-4xl font-bold">{{ Title }}</h1>
+    <p>{{ Description }}</p>
+    <div class="w-full flex justify-center items-center">
+      <a
+        href="/"
+        class="bg-sky-600 hover:bg-sky-500 py-2 px-5 rounded-full text-white"
+        >Back To Home</a
+      >
     </div>
-  </main>
-</body>
-</html>
+  </div>
+</main>

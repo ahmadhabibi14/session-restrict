@@ -43,24 +43,6 @@ func (a *Auth) SignIn(in request.ReqAuthSignIn) (out response.ResAuthSignIn, err
 		return
 	}
 
-	future := time.Now().AddDate(0, 2, 0)
-	sessDuration := sessions.GetDuration(future)
-	sessToken, err := sessions.SetSession(
-		sessions.Session{
-			UserId:    usr.Id,
-			Role:      usr.Role,
-			IpV4:      in.IpV4,
-			IpV6:      in.IpV6,
-			UserAgent: in.UserAgent,
-			Device:    in.Device,
-			OS:        in.OS,
-		}, usr.Role, usr.Id, sessDuration,
-	)
-	if err != nil {
-		out.SetStatus(http.StatusInternalServerError)
-		return
-	}
-
 	exist, sess, err := sessions.GetSessionsByRoleByUserId(usr.Role, usr.Id)
 	if err != nil {
 		out.SetStatus(http.StatusInternalServerError)
@@ -68,9 +50,9 @@ func (a *Auth) SignIn(in request.ReqAuthSignIn) (out response.ResAuthSignIn, err
 	}
 
 	if exist {
-		notifData := notification.NotificationNewSession{
+		notifData := notification.NewSession{
 			Event: notification.EventNewSession,
-			Data: notification.NotificationNewSessionData{
+			Data: notification.NewSessionData{
 				AccessToken: sess.AccessToken,
 				UserId:      sess.UserId,
 				Role:        sess.Role,
@@ -83,6 +65,25 @@ func (a *Auth) SignIn(in request.ReqAuthSignIn) (out response.ResAuthSignIn, err
 			out.SetStatus(http.StatusInternalServerError)
 			return
 		}
+	}
+
+	future := time.Now().AddDate(0, 2, 0)
+	sessDuration := sessions.GetDuration(future)
+	sessToken, err := sessions.SetSession(
+		sessions.Session{
+			UserId:    usr.Id,
+			Role:      usr.Role,
+			IpV4:      in.IpV4,
+			IpV6:      in.IpV6,
+			UserAgent: in.UserAgent,
+			Device:    in.Device,
+			OS:        in.OS,
+			Approved:  !exist,
+		}, usr.Role, usr.Id, sessDuration,
+	)
+	if err != nil {
+		out.SetStatus(http.StatusInternalServerError)
+		return
 	}
 
 	out.ExpiredAt = future

@@ -26,7 +26,7 @@ func (p *Pages) SignIn(c *fiber.Ctx) error {
 	c.Set(fiber.HeaderXFrameOptions, "SAMEORIGIN")
 
 	return c.Render("signin", fiber.Map{
-		`Title`: "Session Restriction",
+		`Title`: "Sign In | Session Restriction",
 	}, "_layout")
 }
 
@@ -35,6 +35,6 @@ func (p *Pages) SignUp(c *fiber.Ctx) error {
 	c.Set(fiber.HeaderXFrameOptions, "SAMEORIGIN")
 
 	return c.Render("signup", fiber.Map{
-		`Title`: "Session Restriction",
+		`Title`: "Sign Up | Session Restriction",
 	}, "_layout")
 }

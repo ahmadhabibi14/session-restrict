@@ -1,0 +1,20 @@
+<main class="flex w-full h-full justify-center items-center text-center">
+  <div
+    class="bg-white mx-4 py-5 px-8 border border-neutral-300 rounded-md flex flex-col gap-5"
+  >
+    <h1 class="text-2xl md:text-4xl font-bold">{{ Title }}</h1>
+    <div class="w-full mx-auto text-left flex flex-col justify-start">
+      <p>We detected that this login session has not been confirmed.</p>
+        <p>For security reasons, you must approve this login from your previous session before accessing your account.</p>
+        <p>🔹 If this was you, please go back to your previous device and press <strong>"Yes, it was me"</strong> on the notification.</p>
+        <p>🔹 If this wasn't you, reset your password immediately to secure your account.</p>
+    </div>
+    <div class="w-full flex justify-center items-center">
+      <a
+        href="/"
+        class="bg-sky-600 hover:bg-sky-500 py-2 px-5 rounded-full text-white"
+        >Back To Home</a
+      >
+    </div>
+  </div>
+</main>

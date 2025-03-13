@@ -80,7 +80,7 @@
       </div>
       <div class="flex flex-row gap-2 justify-end">
         <button
-          class="py-2 px-4 rounded-full hover:text-blue-600 hover:underline"
+          class="py-2 px-4 rounded-full text-blue-600 hover:text-blue-500 font-semibold"
         >
           Bukan saya
         </button>
@@ -93,3 +93,61 @@
     </div>
   </div>
 </div>
+
+<script>
+  function parseSSEMessage(message) {
+    const lines = message.split("\n");
+    const event = {};
+
+    lines.forEach((line) => {
+      const [key, value] = line.split(": ");
+      if (key && value) {
+        event[key.trim()] = value.trim();
+      }
+    });
+
+    if (event["data"]) {
+      event.data = JSON.parse(event.data);
+    }
+
+    return event;
+  }
+
+  async function fetchSSE() {
+    return await fetch("/api/notification/user", {
+      method: "GET",
+      headers: {
+        accept: "text/event-stream"
+      }
+    });
+  }
+
+  (async () => {
+    const response  = await fetchSSE();
+    const reader    = response.body.getReader();
+    const decoder   = new TextDecoder();
+    
+    while (true) {
+      await reader.read().then(async ({ done, value }) => {
+        if (done) {
+          response = await fetchSSE();
+        }
+
+        const resp = decoder.decode(
+          value, { stream: true }
+        );
+
+        const respJson = parseSSEMessage(resp);
+
+        console.log(respJson);
+      }).catch(async (err) => {
+        console.error(err);
+        response = await fetchSSE();
+      });
+
+      if (response.status !== 200) {
+        return;
+      }
+    }
+  })();
+</script>

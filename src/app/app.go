@@ -51,6 +51,7 @@ func (a *App) setupHttp() {
 
 	controller.NewPages(webServer)
 	controller.NewAuth(webServer, a.SrvAuth)
+	controller.NewNotification(webServer)
 
 	webServer.Static(`/assets`, `./assets`, fiber.Static{
 		Download:      false,

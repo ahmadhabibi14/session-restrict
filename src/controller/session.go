@@ -1,7 +1,9 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
+	"session-restrict/src/lib/logger"
 	"session-restrict/src/repo/sessions"
 	"strings"
 	"time"
@@ -17,23 +19,42 @@ const (
 	DeviceUnknown = "unknown"
 )
 
+const CookieAccessToken = `access_token`
+
 func mustLoggedIn(c *fiber.Ctx) error {
-	accessToken := c.Cookies(`auth`)
+	accessToken := c.Cookies(CookieAccessToken)
 	if accessToken == `` {
 		return c.Redirect("/signin", http.StatusPermanentRedirect)
 	}
 
-	_, err := sessions.GetSessionByToken(accessToken)
+	sess, err := sessions.GetSessionByToken(accessToken)
 	if err != nil {
 		RemoveAuthCookie(c)
+		c.ClearCookie(CookieAccessToken)
 		return c.Redirect("/", http.StatusPermanentRedirect)
+	}
+
+	if !sess.Approved {
+		return c.Render("forbidden", fiber.Map{
+			`Title`: fmt.Sprintf("%d - %s", fiber.StatusForbidden, `🚫 Access Denied`),
+		}, "_layout")
 	}
 
 	return c.Next()
 }
 
+func getSession(c *fiber.Ctx) sessions.Session {
+	accessToken := c.Cookies(CookieAccessToken)
+	sess, err := sessions.GetSessionByToken(accessToken)
+	if err != nil {
+		logger.Log.Error(err)
+	}
+
+	return sess
+}
+
 func mustLoggedOut(c *fiber.Ctx) error {
-	accessToken := c.Cookies(`auth`)
+	accessToken := c.Cookies(CookieAccessToken)
 	if accessToken == `` {
 		RemoveAuthCookie(c)
 		return c.Next()
@@ -44,7 +65,7 @@ func mustLoggedOut(c *fiber.Ctx) error {
 
 func SetAuthCookie(c *fiber.Ctx, tokenString string, expiredAt time.Time) {
 	c.Cookie(&fiber.Cookie{
-		Name:     `auth`,
+		Name:     CookieAccessToken,
 		Value:    tokenString,
 		Expires:  expiredAt,
 		SameSite: "Lax",
@@ -56,10 +77,13 @@ func SetAuthCookie(c *fiber.Ctx, tokenString string, expiredAt time.Time) {
 
 func RemoveAuthCookie(c *fiber.Ctx) {
 	c.Cookie(&fiber.Cookie{
-		Name:    `auth`,
-		Value:   "",
-		Path:    `/`,
-		Expires: time.Date(-1, 0, 0, 0, 0, 0, 0, time.Local),
+		Name:     CookieAccessToken,
+		Value:    "",
+		Expires:  time.Date(-1, 0, 0, 0, 0, 0, 0, time.Local),
+		SameSite: "Lax",
+		Secure:   false,
+		HTTPOnly: true,
+		Path:     `/`,
 	})
 }
 

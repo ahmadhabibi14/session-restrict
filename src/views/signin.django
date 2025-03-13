@@ -1,36 +1,63 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="{{ CSP }}" />
-    <link rel="icon" type="image/png" href="/assets/favicon.png" />
-    <title>Sign In | {{ Title }}</title>
-    <link rel="stylesheet" href="/assets/css/output.css" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
-      rel="stylesheet"
-    />
-  </head>
-  <body
-    class="bg-neutral-100 text-neutral-900 w-full min-h-screen h-screen top-0 bottom-0 right-0 left-0"
+<div class="flex w-full h-full justify-center">
+  <section
+    class="w-[500px] h-fit shadow-md rounded-xl p-6 my-16 mx-4 bg-white border-neutral-300 flex flex-col gap-6"
   >
-    <div class="flex w-full h-full justify-center">
-      <section
-        class="w-[500px] h-fit shadow-md rounded-xl p-6 my-16 mx-4 bg-white border-neutral-300 flex flex-col gap-6"
+    <div
+      id="error-login"
+      class="text-sm hidden flex-row items-center justify-between gap-2 rounded-md border border-red-500 bg-red-400/20 text-red-600 py-3 px-4 w-full h-fit"
+    >
+      <p class="line-clamp-1" id="error-message"></p>
+      <button
+        onclick="document.getElementById('error-login').style.display = 'none'"
+        class="flex justify-center items-center w-fit h-fit"
       >
-        <div
-          id="error-login"
-          class="text-sm hidden flex-row items-center justify-between gap-2 rounded-md border border-red-500 bg-red-400/20 text-red-600 py-3 px-4 w-full h-fit"
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="w-4 h-4"
         >
-          <p class="line-clamp-1" id="error-message"></p>
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="flex flex-col gap-7">
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-2">
+          <label for="email" class="text-sm text-zinc-600 ml-2">
+            <span>Email</span>
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="jon@stevorexpress.com"
+            class="bg-white rounded-md w-full border border-zinc-300 py-2 caret-sky-600 focus:border-sky-600 focus:outline focus:outline-sky-600 px-4"
+          />
+        </div>
+        <div class="flex flex-col gap-2 relative">
+          <label for="password" class="text-sm text-zinc-600 ml-2">
+            <span>Password</span>
+          </label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="secret1234"
+            class="bg-white rounded-md w-full border border-zinc-300 py-2 caret-sky-600 focus:border-sky-600 focus:outline focus:outline-sky-600 pl-4 pr-10"
+          />
           <button
-            onclick="document.getElementById('error-login').style.display = 'none'"
-            class="flex justify-center items-center w-fit h-fit"
+            onclick="toggleShowPassword()"
+            class="absolute right-3 top-10 cursor-pointer"
+            title="Show/Hide Password"
           >
             <svg
+              id="eye"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
               fill="none"
@@ -38,156 +65,110 @@
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
-              class="w-4 h-4"
+              class="w-5 h-5"
             >
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
+              <path
+                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+              ></path>
+              <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>
+            <svg
+              id="eye-off"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="w-5 h-5 hidden"
+            >
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
             </svg>
           </button>
         </div>
-        <div class="flex flex-col gap-7">
-          <div class="flex flex-col gap-4">
-            <div class="flex flex-col gap-2">
-              <label for="email" class="text-sm text-zinc-600 ml-2">
-                <span>Email</span>
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                placeholder="jon@stevorexpress.com"
-                class="bg-white rounded-md w-full border border-zinc-300 py-2 caret-sky-600 focus:border-sky-600 focus:outline focus:outline-sky-600 px-4"
-              />
-            </div>
-            <div class="flex flex-col gap-2 relative">
-              <label for="password" class="text-sm text-zinc-600 ml-2">
-                <span>Password</span>
-              </label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                placeholder="secret1234"
-                class="bg-white rounded-md w-full border border-zinc-300 py-2 caret-sky-600 focus:border-sky-600 focus:outline focus:outline-sky-600 pl-4 pr-10"
-              />
-              <button
-                onclick="toggleShowPassword()"
-                class="absolute right-3 top-10 cursor-pointer"
-                title="Show/Hide Password"
-              >
-                <svg
-                  id="eye"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  class="w-5 h-5"
-                >
-                  <path
-                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
-                  ></path>
-                  <line x1="1" y1="1" x2="23" y2="23"></line>
-                </svg>
-                <svg
-                  id="eye-off"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  class="w-5 h-5 hidden"
-                >
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                  <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-              </button>
-            </div>
-          </div>
-          <button
-            id="submit-login"
-            onclick="submitLogin()"
-            class="w-full font-bold py-2.5 px-4 rounded-md bg-sky-600 hover:bg-sky-500 disabled:bg-sky-500 disabled:cursor-not-allowed text-white"
-          >
-            Sign In
-          </button>
-          <p class="text-sm text-center">
-            <span>Have no account ?</span>
-            <a href="/register" class="text-sky-600 hover:text-sky-500 underline">Sign Up</a>
-          </p>
-        </div>
-      </section>
+      </div>
+      <button
+        id="submit-login"
+        onclick="submitLogin()"
+        class="w-full font-bold py-2.5 px-4 rounded-md bg-sky-600 hover:bg-sky-500 disabled:bg-sky-500 disabled:cursor-not-allowed text-white"
+      >
+        Sign In
+      </button>
+      <p class="text-sm text-center">
+        <span>Have no account ?</span>
+        <a href="/register" class="text-sky-600 hover:text-sky-500 underline"
+          >Sign Up</a
+        >
+      </p>
     </div>
+  </section>
+</div>
 
-    <script>
-      function toggleShowPassword() {
-        const password = document.getElementById("password");
-        const eye = document.getElementById("eye");
-        const eyeOff = document.getElementById("eye-off");
+<script>
+  function toggleShowPassword() {
+    const password = document.getElementById("password");
+    const eye = document.getElementById("eye");
+    const eyeOff = document.getElementById("eye-off");
 
-        if (password.type === "password") {
-          password.type = "text";
-          eye.style.display = "none";
-          eyeOff.style.display = "block";
+    if (password.type === "password") {
+      password.type = "text";
+      eye.style.display = "none";
+      eyeOff.style.display = "block";
+    } else {
+      password.type = "password";
+      eye.style.display = "block";
+      eyeOff.style.display = "none";
+    }
+  }
+
+  async function submitLogin() {
+    const submitLoginElm = document.getElementById("submit-login");
+
+    submitLoginElm.disabled = true;
+    submitLoginElm.innerText = "Logging in...";
+
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    await fetch("/api/auth/signin", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: email,
+        password: password,
+      }),
+    })
+      .then(async (res) => {
+        if (res.status === 200) {
+          setTimeout(() => {
+            window.location.href = "";
+          }, 1500);
         } else {
-          password.type = "password";
-          eye.style.display = "block";
-          eyeOff.style.display = "none";
+          const respJson = await res.json();
+
+          submitLoginElm.disabled = false;
+          submitLoginElm.innerText = "Sign In";
+          const errorElm = document.getElementById("error-login");
+          errorElm.style.display = "flex";
+
+          console.log("respjson:", respJson);
+          const errMsgElm = document.getElementById("error-message");
+          errMsgElm.innerText = respJson.error || "login failed !!";
         }
-      }
+      })
+      .catch((err) => {
+        console.error(err);
+        submitLoginElm.disabled = false;
+        submitLoginElm.innerText = "Sign In";
+        const errorElm = document.getElementById("error-login");
+        errorElm.style.display = "flex";
 
-      async function submitLogin() {
-        const submitLoginElm = document.getElementById("submit-login");
-
-        submitLoginElm.disabled = true;
-        submitLoginElm.innerText = "Logging in...";
-
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
-
-        await fetch("/api/auth/signin", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: email,
-            password: password,
-          })
-        })
-          .then(async (res) => {
-            if (res.status === 200) {
-              setTimeout(() => {
-                window.location.href = "";
-              }, 1500);
-            } else {
-              const respJson = await res.json();
-
-              submitLoginElm.disabled = false;
-              submitLoginElm.innerText = "Sign In";
-              const errorElm = document.getElementById("error-login");
-              errorElm.style.display = "flex";
-
-              console.log("respjson:", respJson);
-              const errMsgElm = document.getElementById("error-message");
-              errMsgElm.innerText = respJson.error || "login failed !!";
-            }
-          })
-          .catch((err) => {
-            console.error(err);
-            submitLoginElm.disabled = false;
-            submitLoginElm.innerText = "Sign In";
-            const errorElm = document.getElementById("error-login");
-            errorElm.style.display = "flex";
-
-            const errMsgElm = document.getElementById("error-message");
-            errMsgElm.innerText = "login failed !!";
-          });
-      }
-    </script>
-  </body>
-</html>
+        const errMsgElm = document.getElementById("error-message");
+        errMsgElm.innerText = "login failed !!";
+      });
+  }
+</script>

@@ -11,8 +11,8 @@ type ReqAuthSignIn struct {
 } // @name ReqAuthSignIn
 
 type ReqAuthSignUp struct {
-	Email    string `json:"email" validate:"required,email"`    // Email is required, and must be a valid email address
-	FullName string `json:"fullName" validate:"required,min=5"` // Full name is required and minimal 5 characters
-	Password string `json:"password" validate:"required,min=7"` // Password is required and minimal 7 characters
-	Role     string `json:"role" validate:"required"`           // Role is required, must be admin_director/admin/admin_finance/admin_it
+	Email    string `json:"email" validate:"required,email"`     // Email is required, and must be a valid email address
+	FullName string `json:"full_name" validate:"required,min=5"` // Full name is required and minimal 5 characters
+	Password string `json:"password" validate:"required,min=7"`  // Password is required and minimal 7 characters
+	Role     string `json:"role" validate:"required"`            // Role is required, must be admin_director/admin/admin_finance/admin_it
 } // @name ReqAuthSignUp

@@ -53,8 +53,8 @@ func (u *User) Insert() error {
 		return Err400UserInsertInvalidRole
 	}
 
-	query := `INSERT INTO ` + TableUsers + ` (full_name, email, password, role)
-	VALUES ($1, $2, $3, $4) RETURNING *`
+	query := `INSERT INTO ` + TableUsers + ` (full_name, email, password, role, is_deleted)
+	VALUES ($1, $2, $3, $4, FALSE) RETURNING *`
 
 	if err := database.ConnPg.QueryRowx(query,
 		u.FullName, u.Email, u.Password, u.Role,

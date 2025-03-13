@@ -32,6 +32,12 @@ func (a *Auth) SignIn(c *fiber.Ctx) error {
 		})
 	}
 
+	in.IpV4 = GetIpV4(c)
+	in.IpV6 = GetIpV6(c)
+	in.UserAgent = c.Get(fiber.HeaderUserAgent)
+	in.OS = GetOS(c)
+	in.Device = GetDevice(c)
+
 	out, err := a.auth.SignIn(in)
 	if err != nil {
 		return c.Status(out.StatusCode).JSON(response.ResponseCommon{
@@ -49,5 +55,24 @@ func (a *Auth) SignIn(c *fiber.Ctx) error {
 }
 
 func (a *Auth) SignUp(c *fiber.Ctx) error {
-	return c.SendStatus(http.StatusOK)
+	in, err := helper.ReadBody[request.ReqAuthSignUp](c)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(response.ResponseCommon{
+			StatusCode: http.StatusBadRequest,
+			Error:      err.Error(),
+		})
+	}
+
+	out, err := a.auth.SignUp(in)
+	if err != nil {
+		return c.Status(out.StatusCode).JSON(response.ResponseCommon{
+			StatusCode: out.StatusCode,
+			Error:      err.Error(),
+		})
+	}
+
+	out.SetMessage(`Sign Up successfully !`)
+	out.SetStatus(http.StatusOK)
+
+	return c.Status(http.StatusOK).JSON(out)
 }

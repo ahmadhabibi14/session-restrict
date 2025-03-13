@@ -6,6 +6,7 @@ import (
 	"session-restrict/helper"
 	"session-restrict/src/dto/request"
 	"session-restrict/src/dto/response"
+	"session-restrict/src/repo/notification"
 	"session-restrict/src/repo/sessions"
 	"session-restrict/src/repo/users"
 	"time"
@@ -58,6 +59,30 @@ func (a *Auth) SignIn(in request.ReqAuthSignIn) (out response.ResAuthSignIn, err
 	if err != nil {
 		out.SetStatus(http.StatusInternalServerError)
 		return
+	}
+
+	exist, sess, err := sessions.GetSessionsByRoleByUserId(usr.Role, usr.Id)
+	if err != nil {
+		out.SetStatus(http.StatusInternalServerError)
+		return
+	}
+
+	if exist {
+		notifData := notification.NotificationNewSession{
+			Event: notification.EventNewSession,
+			Data: notification.NotificationNewSessionData{
+				AccessToken: sess.AccessToken,
+				UserId:      sess.UserId,
+				Role:        sess.Role,
+				Timestamp:   time.Now(),
+			},
+		}
+
+		err = notification.PublishNewSession(notifData, usr.Id)
+		if err != nil {
+			out.SetStatus(http.StatusInternalServerError)
+			return
+		}
 	}
 
 	out.ExpiredAt = future

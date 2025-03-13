@@ -49,6 +49,7 @@ func (a *App) setupHttp() {
 	middleware := web.NewMiddleware(webServer)
 	middleware.Init()
 
+	controller.NewPages(webServer)
 	controller.NewAuth(webServer, a.SrvAuth)
 
 	webServer.Static(`/assets`, `./assets`, fiber.Static{

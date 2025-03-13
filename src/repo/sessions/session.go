@@ -6,6 +6,7 @@ import (
 	"session-restrict/helper"
 	"session-restrict/src/lib/database"
 	"session-restrict/src/lib/logger"
+	"strings"
 	"time"
 
 	"github.com/goccy/go-json"
@@ -25,6 +26,7 @@ type Session struct {
 	UserAgent string `json:"user_agent"`
 	Device    string `json:"device"`
 	OS        string `json:"os"`
+	Approved  bool   `json:"approved"`
 }
 
 var (
@@ -61,26 +63,96 @@ func SetSession(session Session, role string, userId uint64, expired time.Durati
 	return token, nil
 }
 
-func GetSessionByToken(accessToken string) (Session, error) {
-	var sess Session
-	var sessStr string
+func GetSessionByToken(accessToken string) (session Session, err error) {
+	keyPattern := fmt.Sprintf("*%s", accessToken)
 
-	keyPattern := fmt.Sprintf("session:*:*:%s", accessToken)
+	var scannedKeys []string
 
-	err := database.ConnRd.Get(keyPattern).Scan(&sessStr)
-	if !(err == nil || sessStr == "") {
-		logger.Log.Error(err, Err400InvalidToken.Error())
-
-		return sess, Err400InvalidToken
+	iter := database.ConnRd.Scan(0, keyPattern, 10).Iterator()
+	for iter.Next() {
+		scannedKeys = append(scannedKeys, iter.Val())
 	}
 
-	err = json.Unmarshal([]byte(sessStr), &sess)
-	if err != nil {
-		logger.Log.Error(err, Err500FailedSetSession.Error())
-		return sess, Err500FailedSetSession
+	for _, k := range scannedKeys {
+		var sessString string
+		errGet := database.ConnRd.Get(k).Scan(&sessString)
+		if errGet != nil {
+			logger.Log.Error(errGet, Err500FailedSetSession.Error())
+
+			err = Err500FailedSetSession
+			return
+		}
+
+		errUnmarshal := json.Unmarshal([]byte(sessString), &session)
+		if errUnmarshal != nil {
+			logger.Log.Error(errUnmarshal, Err500FailedSetSession.Error())
+
+			err = Err500FailedSetSession
+			return
+		}
+
+		break
 	}
 
-	return sess, nil
+	return
+}
+
+type SessionsWithKey struct {
+	Session
+	Key         string `json:"-"`
+	AccessToken string `json:"-"`
+}
+
+func GetSessionsByRoleByUserId(role string, userId uint64) (exist bool, session SessionsWithKey, err error) {
+	keyPattern := fmt.Sprintf("session:%s:%d:*", role, userId)
+
+	var scannedKeys []string
+
+	iter := database.ConnRd.Scan(0, keyPattern, 10).Iterator()
+	for iter.Next() {
+		scannedKeys = append(scannedKeys, iter.Val())
+	}
+
+	for _, k := range scannedKeys {
+		var sessString string
+		errGet := database.ConnRd.Get(k).Scan(&sessString)
+		if errGet != nil {
+			logger.Log.Error(errGet, Err500FailedSetSession.Error())
+
+			err = Err500FailedSetSession
+			return
+		}
+
+		errUnmarshal := json.Unmarshal([]byte(sessString), &session)
+		if errUnmarshal != nil {
+			logger.Log.Error(errUnmarshal, Err500FailedSetSession.Error())
+
+			err = Err500FailedSetSession
+			return
+		}
+
+		session.Key = k
+		session.AccessToken = getTokenFromKey(k)
+
+		exist = true
+
+		if !session.Approved {
+			break
+		}
+	}
+
+	return
+}
+
+func getTokenFromKey(key string) string {
+	parts := strings.Split(key, ":") // Split by ":"
+
+	if len(parts) >= 4 {
+		token := parts[3] // Get the last part
+		return token
+	}
+
+	return key
 }
 
 // func GetSessionsByRoleByUserId(role string, userId uint64) ([]Session, error) {

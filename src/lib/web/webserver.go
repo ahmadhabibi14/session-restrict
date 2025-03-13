@@ -36,13 +36,13 @@ func NewWebserver() *fiber.App {
 					return c.Render("error", fiber.Map{
 						`Title`:       fmt.Sprintf("%d - %s", fiber.StatusNotFound, `Page Not Found`),
 						`Description`: "Cannot find the page you are looking for",
-					})
+					}, "_layout")
 				}
 
 				return c.Render("error", fiber.Map{
 					`Title`:       fmt.Sprintf("%d - %s", code, http.StatusText(code)),
 					`Description`: err.Error(),
-				})
+				}, "_layout")
 			}
 
 			c.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSON)

@@ -1,0 +1,95 @@
+<div class="flex flex-col justify-center items-center w-5/12 mx-auto">
+  <div class="flex flex-col gap-6 w-fit">
+    <h1 class="text-3xl font-bold text-center">Session Restriction</h1>
+    <div
+      class="text-sm flex flex-col gap-5 rounded-xl border shadow p-6 w-full h-fit"
+    >
+      <div class="flex flex-col gap-3">
+        <h4 class="text-xl font-bold">
+          ⚠️ Peringatan: Aktivitas Login Tidak Dikenal
+        </h4>
+        <div class="w-full">
+          <div class="p-1.5 min-w-full inline-block align-middle border rounded-md">
+            <div class="overflow-hidden">
+              <table class="min-w-full divide-y divide-neutral-200">
+                <thead>
+                  <tr>
+                    <th
+                      scope="col"
+                      colspan="2"
+                      class="px-4 py-2 text-sm text-center font-medium text-neutral-500 uppercase"
+                    >
+                      Detail
+                    </th>
+                  </tr>
+                </thead>
+                <tbody id="tbody" class="divide-y divide-neutral-200 text-sm">
+                  <tr>
+                    <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                      Access Token
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap">
+                      zOBk5nMeOlgA0jaCz3Hy
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                      User ID
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap">
+                      #1
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                      Role
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap">
+                      User
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                      Waktu
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap">
+                      03 Mar 2025, 11:16:28
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                      Perangkat
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap">
+                      Mobile, Android 10
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                      IP Address
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap">
+                      162.158.163.128
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="flex flex-row gap-2 justify-end">
+        <button
+          class="py-2 px-4 rounded-full hover:text-blue-600 hover:underline"
+        >
+          Bukan saya
+        </button>
+        <button
+          class="py-2 px-4 rounded-full bg-blue-600 hover:bg-blue-500 text-white"
+        >
+          Ya, itu saya
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"net/http"
+	"session-restrict/src/repo/sessions"
 	"strings"
 	"time"
 
@@ -14,6 +16,31 @@ const (
 	DeviceBot     = "bot"
 	DeviceUnknown = "unknown"
 )
+
+func mustLoggedIn(c *fiber.Ctx) error {
+	accessToken := c.Cookies(`auth`)
+	if accessToken == `` {
+		return c.Redirect("/signin", http.StatusPermanentRedirect)
+	}
+
+	_, err := sessions.GetSessionByToken(accessToken)
+	if err != nil {
+		RemoveAuthCookie(c)
+		return c.Redirect("/", http.StatusPermanentRedirect)
+	}
+
+	return c.Next()
+}
+
+func mustLoggedOut(c *fiber.Ctx) error {
+	accessToken := c.Cookies(`auth`)
+	if accessToken == `` {
+		RemoveAuthCookie(c)
+		return c.Next()
+	}
+
+	return c.Redirect(`/`, http.StatusPermanentRedirect)
+}
 
 func SetAuthCookie(c *fiber.Ctx, tokenString string, expiredAt time.Time) {
 	c.Cookie(&fiber.Cookie{

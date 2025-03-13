@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*::selection {
+  @apply bg-sky-600 text-white;
+}
+
+html {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+}
+
+.main-container {
+  @apply bg-white text-neutral-900 w-full min-h-screen h-screen top-0 bottom-0 right-0 left-0;
+}
+.root-content {
+  @apply overflow-y-auto w-full duration-150;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+}
+
+.content {
+  @apply min-h-[110dvh] max-h-fit w-full px-4 md:px-5 md:py-6 py-4;
+}

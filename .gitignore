@@ -3,3 +3,4 @@ _docker
 tmp
 main
 logs
+node_modules

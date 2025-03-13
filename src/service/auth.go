@@ -6,7 +6,6 @@ import (
 	"session-restrict/helper"
 	"session-restrict/src/dto/request"
 	"session-restrict/src/dto/response"
-	"session-restrict/src/repo/notification"
 	"session-restrict/src/repo/sessions"
 	"session-restrict/src/repo/users"
 	"time"
@@ -43,24 +42,22 @@ func (a *Auth) SignIn(in request.ReqAuthSignIn) (out response.ResAuthSignIn, err
 		return
 	}
 
-	exist, sess, err := sessions.GetSessionByRoleByUserId(usr.Role, usr.Id)
+	sess := sessions.NewSession()
+	sess.Role = usr.Role
+	sess.UserId = usr.Id
+	session, isExist, err := sess.GetSessionByRoleByUserId()
 	if err != nil {
 		out.SetStatus(http.StatusInternalServerError)
 		return
 	}
 
-	if exist {
-		notifData := notification.NewSession{
-			Event: notification.EventNewSession,
-			Data: notification.NewSessionData{
-				AccessToken: sess.AccessToken,
-				UserId:      sess.UserId,
-				Role:        sess.Role,
-				Timestamp:   time.Now(),
-			},
+	if isExist {
+		notifData := sessions.NotificationNewSession{
+			Event: sessions.EventNewSession,
+			Data:  session,
 		}
 
-		err = notification.PublishNewSession(notifData, usr.Id)
+		err = sessions.PublishNewSession(notifData, usr.Id)
 		if err != nil {
 			out.SetStatus(http.StatusInternalServerError)
 			return
@@ -68,28 +65,30 @@ func (a *Auth) SignIn(in request.ReqAuthSignIn) (out response.ResAuthSignIn, err
 	}
 
 	future := time.Now().AddDate(0, 2, 0)
-	sessDuration := sessions.GetDuration(future)
-	sessToken, err := sessions.SetSession(
-		sessions.Session{
-			UserId:    usr.Id,
-			Role:      usr.Role,
-			IpV4:      in.IpV4,
-			IpV6:      in.IpV6,
-			UserAgent: in.UserAgent,
-			Device:    in.Device,
-			OS:        in.OS,
-			Approved:  !exist,
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		}, usr.Role, usr.Id, sessDuration,
-	)
+	duration := sess.GenerateDuration(future)
+	accessToken := sess.GenerateToken()
+
+	sess.AccessToken = accessToken
+	sess.UserId = usr.Id
+	sess.Role = usr.Role
+	sess.IpV4 = in.IpV4
+	sess.IpV6 = in.IpV6
+	sess.UserAgent = in.UserAgent
+	sess.Device = in.Device
+	sess.OS = in.OS
+	sess.Approved = !isExist
+	sess.CreatedAt = time.Now()
+	sess.UpdatedAt = time.Now()
+	sess.ExpiredAt = future
+
+	err = sess.SetSession(duration)
 	if err != nil {
 		out.SetStatus(http.StatusInternalServerError)
 		return
 	}
 
+	out.AccessToken = accessToken
 	out.ExpiredAt = future
-	out.AccessToken = sessToken
 	out.User = usr.Sanitize()
 
 	return
@@ -122,6 +121,22 @@ func (a *Auth) SignUp(in request.ReqAuthSignUp) (out response.ResAuthSignUp, err
 	}
 
 	out.User = usr.Sanitize()
+
+	return
+}
+
+func (a *Auth) SignOut(userId uint64, accessToken, role string) (out response.ResponseCommon, err error) {
+	sess := sessions.NewSession()
+	sess.UserId = userId
+	sess.AccessToken = accessToken
+	sess.Role = role
+
+	key := sess.GenerateKey(role, userId, accessToken)
+	err = sess.DeleteSession(key)
+	if err != nil {
+		out.SetStatus(http.StatusInternalServerError)
+		return
+	}
 
 	return
 }

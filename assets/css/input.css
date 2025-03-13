@@ -26,3 +26,7 @@ html {
 .session-container {
   @apply text-sm flex flex-col gap-5 rounded-xl border shadow p-1 w-full h-fit;
 }
+
+.capital {
+  text-transform: capitalize;
+}

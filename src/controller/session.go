@@ -21,13 +21,25 @@ type Session struct {
 func NewSession(app *fiber.App, srvSession *service.Session) {
 	handler := &Session{srvSession}
 
-	app.Get("/api/sessions", mustLoggedInApi, handler.GetSessions)
+	app.Route("/api/sessions", func(router fiber.Router) {
+		router.Get("/", mustLoggedInAjax, handler.GetSessions)
+		router.Patch("/approve", mustLoggedInAjax, handler.Approve)
+		router.Patch("/reject", mustLoggedInAjax, handler.Reject)
+	})
+}
+
+func (a *Session) Approve(c *fiber.Ctx) error {
+	return c.SendStatus(http.StatusOK)
+}
+
+func (a *Session) Reject(c *fiber.Ctx) error {
+	return c.SendStatus(http.StatusOK)
 }
 
 func (a *Session) GetSessions(c *fiber.Ctx) error {
 	session := getSession(c)
 
-	out, err := a.srvSession.GetSessionsByUserId(session.UserId, session.Role)
+	out, err := a.srvSession.GetSessions(session.UserId, session.Role)
 	if err != nil {
 		return c.Status(out.StatusCode).JSON(response.ResponseCommon{
 			StatusCode: out.StatusCode,
@@ -56,14 +68,17 @@ func mustLoggedIn(c *fiber.Ctx) error {
 		return c.Redirect("/signin", http.StatusPermanentRedirect)
 	}
 
-	sess, err := sessions.GetSessionByToken(accessToken)
+	sess := sessions.NewSession()
+	sess.AccessToken = accessToken
+
+	session, err := sess.GetSessionByToken()
 	if err != nil {
 		RemoveAuthCookie(c)
 		c.ClearCookie(CookieAccessToken)
 		return c.Redirect("/", http.StatusPermanentRedirect)
 	}
 
-	if !sess.Approved {
+	if !session.Approved {
 		return c.Render("forbidden", fiber.Map{
 			`Title`: fmt.Sprintf("%d - %s", fiber.StatusForbidden, `🚫 Access Denied`),
 		}, "_layout")
@@ -72,20 +87,27 @@ func mustLoggedIn(c *fiber.Ctx) error {
 	return c.Next()
 }
 
-func mustLoggedInApi(c *fiber.Ctx) error {
+func mustLoggedInAjax(c *fiber.Ctx) error {
 	accessToken := c.Cookies(CookieAccessToken)
 	if accessToken == `` {
-		return c.Redirect("/signin", http.StatusPermanentRedirect)
+		return c.Status(http.StatusUnauthorized).JSON(response.ResponseCommon{
+			StatusCode: http.StatusUnauthorized,
+			Error:      "unauthorized",
+		})
 	}
 
-	sess, err := sessions.GetSessionByToken(accessToken)
+	sess := sessions.NewSession()
+	sess.AccessToken = accessToken
+
+	session, err := sess.GetSessionByToken()
 	if err != nil {
-		RemoveAuthCookie(c)
-		c.ClearCookie(CookieAccessToken)
-		return c.Redirect("/", http.StatusPermanentRedirect)
+		return c.Status(http.StatusUnauthorized).JSON(response.ResponseCommon{
+			StatusCode: http.StatusUnauthorized,
+			Error:      "unauthorized",
+		})
 	}
 
-	if !sess.Approved {
+	if !session.Approved {
 		return c.Status(http.StatusUnauthorized).JSON(response.ResponseCommon{
 			StatusCode: http.StatusUnauthorized,
 			Error:      "unauthorized",
@@ -97,18 +119,21 @@ func mustLoggedInApi(c *fiber.Ctx) error {
 
 func getSession(c *fiber.Ctx) sessions.Session {
 	accessToken := c.Cookies(CookieAccessToken)
-	sess, err := sessions.GetSessionByToken(accessToken)
+
+	sess := sessions.NewSession()
+	sess.AccessToken = accessToken
+
+	session, err := sess.GetSessionByToken()
 	if err != nil {
 		logger.Log.Error(err)
 	}
 
-	return sess
+	return session
 }
 
 func mustLoggedOut(c *fiber.Ctx) error {
 	accessToken := c.Cookies(CookieAccessToken)
 	if accessToken == `` {
-		RemoveAuthCookie(c)
 		return c.Next()
 	}
 

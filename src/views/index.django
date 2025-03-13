@@ -1,7 +1,7 @@
 <div class="flex flex-col justify-center items-center w-full mx-auto">
   <div class="flex flex-col gap-6 w-fit">
     <h1 class="text-3xl font-bold text-center">Session Restriction</h1>
-    <div id="sessions-container" class="grid grid-cols-3 gap-5">
+    <div id="sessions-container" class="grid grid-cols-1 md:grid-cols-3 gap-5">
       <p>No Sessions</p>
     </div>
   </div>
@@ -42,32 +42,33 @@
   }
 
   async function fetchSSE() {
-    const response  = await await fetch("/api/notification/user", {
+    const response = await await fetch("/api/notification/user", {
       method: "GET",
       headers: {
-        accept: "text/event-stream"
-      }
+        accept: "text/event-stream",
+      },
     });
-    const reader    = response.body.getReader();
-    const decoder   = new TextDecoder();
-    
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
     while (true) {
-      await reader.read().then(async ({ done, value }) => {
-        if (done) {
+      await reader
+        .read()
+        .then(async ({ done, value }) => {
+          if (done) {
+            response = await fetchSSE();
+          }
+
+          const resp = decoder.decode(value, { stream: true });
+
+          const respJson = parseSSEMessage(resp);
+
+          console.log(respJson);
+        })
+        .catch(async (err) => {
+          console.error(err);
           response = await fetchSSE();
-        }
-
-        const resp = decoder.decode(
-          value, { stream: true }
-        );
-
-        const respJson = parseSSEMessage(resp);
-
-        console.log(respJson);
-      }).catch(async (err) => {
-        console.error(err);
-        response = await fetchSSE();
-      });
+        });
 
       if (response.status !== 200) {
         return;
@@ -76,21 +77,21 @@
   }
 
   /**
-    * @typedef {Object} Session
-    * @property {string} access_token - The access token for the session.
-    * @property {boolean} approved - Indicates whether the session is approved.
-    * @property {string} device - The type of device used (e.g., "desktop").
-    * @property {string} ip_v4 - The IPv4 address of the user.
-    * @property {string} ip_v6 - The IPv6 address of the user.
-    * @property {string} key - The unique session key.
-    * @property {string} os - The operating system of the device.
-    * @property {string} role - The role of the user (e.g., "user").
-    * @property {string} user_agent - The user agent string from the browser.
-    * @property {number} user_id - The unique identifier of the user.
-    * @property {string} created_at
-    * @property {string} updated_at
-    */
-  
+   * @typedef {Object} Session
+   * @property {string} access_token
+   * @property {number} user_id
+   * @property {string} role
+   * @property {string} ip_v4
+   * @property {string} ip_v6
+   * @property {string} user_agent
+   * @property {string} device
+   * @property {string} os
+   * @property {boolean} approved
+   * @property {string} created_at
+   * @property {string} updated_at
+   * @property {string} expired_at
+   */
+
   let sessions = /** @type {Session[]} */ ([]);
 
   /**
@@ -100,12 +101,12 @@
     console.log(sessions);
 
     const elmSessionsContainer = document.getElementById("sessions-container");
-    
+
     if (sessions && sessions.length) {
       elmSessionsContainer.innerHTML = ``;
     }
 
-    for (const sess of (sessions || [])) {
+    for (const sess of sessions || []) {
       const elmSessionContainer = document.createElement("div");
       elmSessionContainer.classList.add("session-container");
 
@@ -148,8 +149,24 @@
                       <td class="px-4 py-2 whitespace-nowrap font-semibold">
                         Role
                       </td>
+                      <td class="px-4 py-2 whitespace-nowrap capital">
+                        ${sess.role}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        IP Address
+                      </td>
                       <td class="px-4 py-2 whitespace-nowrap">
-                        ${String(sess.role).toUpperCase()}
+                        ${sess.ip_v4}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        Device
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap capital">
+                        ${sess.device}, ${sess.os}
                       </td>
                     </tr>
                     <tr>
@@ -178,18 +195,10 @@
                     </tr>
                     <tr>
                       <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                        Device
+                        Expired At
                       </td>
                       <td class="px-4 py-2 whitespace-nowrap">
-                        ${sess.device}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                        IP Address
-                      </td>
-                      <td class="px-4 py-2 whitespace-nowrap">
-                        ${sess.ip_v4}
+                        ${dateFormatted(sess.expired_at)}
                       </td>
                     </tr>
                   </tbody>
@@ -204,7 +213,7 @@
           >
             Remove
           </button>
-        </div>`
+        </div>`;
 
         elmSessionsContainer.appendChild(elmSessionContainer);
         continue;
@@ -247,8 +256,24 @@
                       <td class="px-4 py-2 whitespace-nowrap font-semibold">
                         Role
                       </td>
-                      <td class="px-4 py-2 whitespace-nowrap">
+                      <td class="px-4 py-2 whitespace-nowrap capital">
                         ${sess.role}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        IP Address
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        ${sess.ip_v4}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
+                        Device
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap capital">
+                        ${sess.device}, ${sess.os}
                       </td>
                     </tr>
                     <tr>
@@ -277,18 +302,10 @@
                     </tr>
                     <tr>
                       <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                        Device
+                        Expired At
                       </td>
                       <td class="px-4 py-2 whitespace-nowrap">
-                        ${sess.device}, ${sess.os}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td class="px-4 py-2 whitespace-nowrap font-semibold">
-                        IP Address
-                      </td>
-                      <td class="px-4 py-2 whitespace-nowrap">
-                        ${sess.ip_v4}
+                        ${dateFormatted(sess.expired_at)}
                       </td>
                     </tr>
                   </tbody>
@@ -308,9 +325,9 @@
           >
             Approve
           </button>
-        </div>`
+        </div>`;
 
-        elmSessionsContainer.appendChild(elmSessionContainer);
+      elmSessionsContainer.appendChild(elmSessionContainer);
     }
   }
 
@@ -318,17 +335,19 @@
     await fetch("/api/sessions", {
       method: "GET",
       headers: {
-        "Content-Type": "application/json"
-      }
-    }).then(async (res) => {
-      const dataJson = await res.json();
-      
-      if (dataJson.data) {
-        renderSessions(dataJson.data);
-      }
-    }).catch(err => {
-      console.error(err);
+        "Content-Type": "application/json",
+      },
     })
+      .then(async (res) => {
+        const dataJson = await res.json();
+
+        if (dataJson.data) {
+          renderSessions(dataJson.data);
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+      });
   }
 
   (async () => {

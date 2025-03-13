@@ -5,7 +5,7 @@ import (
 	"session-restrict/helper/converter"
 	"session-restrict/src/lib/database"
 	"session-restrict/src/lib/logger"
-	"session-restrict/src/repo/notification"
+	"session-restrict/src/repo/sessions"
 
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
@@ -19,7 +19,7 @@ func NewNotification(app *fiber.App) {
 	handler := &Notification{}
 
 	app.Route("/api/notification", func(router fiber.Router) {
-		router.Get("/user", mustLoggedIn, handler.ByUserId)
+		router.Get("/user", mustLoggedInAjax, handler.ByUserId)
 	})
 }
 
@@ -29,7 +29,7 @@ func (n *Notification) ByUserId(c *fiber.Ctx) error {
 	session := getSession(c)
 
 	c.Context().SetBodyStreamWriter(fasthttp.StreamWriter(func(w *bufio.Writer) {
-		channel := notification.GetChannelUserNotif(session.UserId)
+		channel := sessions.GetChannelUserNotif(session.UserId)
 		pubsub := database.ConnRd.Subscribe(channel)
 		defer pubsub.Close()
 
@@ -51,15 +51,15 @@ func (n *Notification) ByUserId(c *fiber.Ctx) error {
 			var dataBytes []byte
 
 			switch event {
-			case notification.EventNewSession:
-				var newSession notification.NewSession
-				err = json.Unmarshal([]byte(msg.Payload), &newSession)
+			case sessions.EventNewSession:
+				var notifSession sessions.NotificationNewSession
+				err = json.Unmarshal([]byte(msg.Payload), &notifSession)
 				if err != nil {
 					logger.Log.Error(err)
 					continue
 				}
 
-				dataBytes, err = json.Marshal(newSession.Data)
+				dataBytes, err = json.Marshal(notifSession.Data)
 				if err != nil {
 					logger.Log.Error(err)
 					continue
@@ -68,7 +68,7 @@ func (n *Notification) ByUserId(c *fiber.Ctx) error {
 				continue
 			}
 
-			payload := GetSSEPayload(notification.EventNewSession, string(dataBytes))
+			payload := GetSSEPayload(sessions.EventNewSession, string(dataBytes))
 			_, err = w.WriteString(payload)
 			if err != nil {
 				logger.Log.Error(err, `failed to write data`)

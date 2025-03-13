@@ -6,7 +6,6 @@ import (
 	"session-restrict/helper"
 	"session-restrict/src/lib/database"
 	"session-restrict/src/lib/logger"
-	"strings"
 	"time"
 
 	"github.com/goccy/go-json"
@@ -19,16 +18,22 @@ const (
 )
 
 type Session struct {
-	UserId    uint64    `json:"user_id"`
-	Role      string    `json:"role"`
-	IpV4      string    `json:"ip_v4"`
-	IpV6      string    `json:"ip_v6"`
-	UserAgent string    `json:"user_agent"`
-	Device    string    `json:"device"`
-	OS        string    `json:"os"`
-	Approved  bool      `json:"approved"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	AccessToken string    `json:"access_token"`
+	UserId      uint64    `json:"user_id"`
+	Role        string    `json:"role"`
+	IpV4        string    `json:"ip_v4"`
+	IpV6        string    `json:"ip_v6"`
+	UserAgent   string    `json:"user_agent"`
+	Device      string    `json:"device"`
+	OS          string    `json:"os"`
+	Approved    bool      `json:"approved"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	ExpiredAt   time.Time `json:"expired_at"`
+}
+
+func NewSession() *Session {
+	return &Session{}
 }
 
 var (
@@ -36,40 +41,102 @@ var (
 	Err500FailedGetSession    = errors.New(`failed to get session`)
 	Err500FailedGetSessions   = errors.New(`failed to get sessions`)
 	Err500FailedDeleteSession = errors.New(`failed to delete session`)
+	Err500FailedUpdateSession = errors.New(`failed to update session`)
+	Err400SessionNotFound     = errors.New(`session not found`)
 	Err400InvalidToken        = errors.New(`invalid access token`)
 )
 
-// session:<role>:<user_id>:<access_token>
-func GetKey(role string, userId uint64, accessToken string) string {
+func (s *Session) GenerateToken() string {
+	return helper.RandString(30)
+}
+
+func (s *Session) GenerateKey(role string, userId uint64, accessToken string) string {
 	return fmt.Sprintf("session:%v:%d:%s", role, userId, accessToken)
 }
 
-func GetDuration(future time.Time) time.Duration {
+func (s *Session) GenerateDuration(future time.Time) time.Duration {
 	return future.Sub(time.Now())
 }
 
-func SetSession(session Session, role string, userId uint64, expired time.Duration) (string, error) {
-	sessionJson, err := json.Marshal(session)
-	if err != nil {
-		logger.Log.Error(err, Err500FailedSetSession.Error())
-		return ``, Err500FailedSetSession
+func (s *Session) GetSession(key string) (Session, error) {
+	var sessString string
+	var sess Session
+	var err error
+
+	err = database.ConnRd.Get(key).Scan(&sessString)
+	if err != nil || sessString == "" {
+		return sess, Err400SessionNotFound
 	}
 
-	token := helper.RandString(20)
-	key := GetKey(role, userId, token)
-
-	err = database.ConnRd.Set(key, sessionJson, expired).Err()
-
+	err = json.Unmarshal([]byte(sessString), s)
 	if err != nil {
-		logger.Log.Error(err, Err500FailedSetSession.Error())
-		return ``, Err500FailedSetSession
+		logger.Log.Error(err)
+		return sess, Err500FailedGetSession
 	}
 
-	return token, nil
+	return sess, nil
 }
 
-func GetSessionByToken(accessToken string) (session Session, err error) {
-	keyPattern := fmt.Sprintf("*%s", accessToken)
+func (s *Session) SetSession(expired time.Duration) error {
+	sessionJson, err := json.Marshal(s)
+	if err != nil {
+		logger.Log.Error(err, Err500FailedSetSession.Error())
+		return Err500FailedSetSession
+	}
+
+	key := s.GenerateKey(s.Role, s.UserId, s.AccessToken)
+
+	err = database.ConnRd.Set(key, sessionJson, expired).Err()
+	if err != nil {
+		logger.Log.Error(err, Err500FailedSetSession.Error())
+		return Err500FailedSetSession
+	}
+
+	return nil
+}
+
+func (s *Session) Approve(key string) (Session, error) {
+	var sessString string
+	var sess Session
+	var err error
+
+	err = database.ConnRd.Get(key).Scan(&sessString)
+	if err != nil || sessString == "" {
+		return sess, Err400SessionNotFound
+	}
+
+	err = json.Unmarshal([]byte(sessString), s)
+	if err != nil {
+		logger.Log.Error(err)
+		return sess, Err500FailedGetSession
+	}
+
+	sess.Approved = true
+	sess.UpdatedAt = time.Now()
+
+	sessJson, err := json.Marshal(sess)
+	if err != nil {
+		logger.Log.Error(err)
+		return sess, Err500FailedGetSession
+	}
+
+	ttl, err := database.ConnRd.TTL(key).Result()
+	if err != nil || ttl <= 0 {
+		logger.Log.Error(err)
+		return sess, Err500FailedUpdateSession
+	}
+
+	err = database.ConnRd.Set(key, sessJson, ttl).Err()
+	if err != nil {
+		logger.Log.Error(err)
+		return sess, Err500FailedUpdateSession
+	}
+
+	return sess, nil
+}
+
+func (s *Session) GetSessionByToken() (session Session, err error) {
+	keyPattern := fmt.Sprintf("*%s", s.AccessToken)
 
 	var scannedKeys []string
 
@@ -107,14 +174,8 @@ func GetSessionByToken(accessToken string) (session Session, err error) {
 	return
 }
 
-type SessionsWithKey struct {
-	Session
-	Key         string `json:"key,omitempty"`
-	AccessToken string `json:"access_token,omitempty"`
-}
-
-func GetSessionByRoleByUserId(role string, userId uint64) (exist bool, session SessionsWithKey, err error) {
-	keyPattern := fmt.Sprintf("session:%s:%d:*", role, userId)
+func (s *Session) GetSessionByRoleByUserId() (session Session, isExist bool, err error) {
+	keyPattern := fmt.Sprintf("session:%s:%d:*", s.Role, s.UserId)
 
 	var scannedKeys []string
 
@@ -124,7 +185,7 @@ func GetSessionByRoleByUserId(role string, userId uint64) (exist bool, session S
 	}
 
 	if len(scannedKeys) > 0 {
-		exist = true
+		isExist = true
 	}
 
 	for _, k := range scannedKeys {
@@ -145,9 +206,6 @@ func GetSessionByRoleByUserId(role string, userId uint64) (exist bool, session S
 			return
 		}
 
-		session.Key = k
-		session.AccessToken = getTokenFromKey(k)
-
 		if !session.Approved {
 			break
 		}
@@ -156,8 +214,8 @@ func GetSessionByRoleByUserId(role string, userId uint64) (exist bool, session S
 	return
 }
 
-func GetSessionsByRoleByUserId(role string, userId uint64) (sessions []SessionsWithKey, err error) {
-	keyPattern := fmt.Sprintf("session:%s:%d:*", role, userId)
+func (s *Session) GetSessionsByUser() (sessions []Session, err error) {
+	keyPattern := fmt.Sprintf("session:%s:%d:*", s.Role, s.UserId)
 
 	var scannedKeys []string
 
@@ -176,7 +234,7 @@ func GetSessionsByRoleByUserId(role string, userId uint64) (sessions []SessionsW
 			return
 		}
 
-		var session SessionsWithKey
+		var session Session
 		errUnmarshal := json.Unmarshal([]byte(sessString), &session)
 		if errUnmarshal != nil {
 			logger.Log.Error(errUnmarshal, Err500FailedGetSessions.Error())
@@ -185,16 +243,13 @@ func GetSessionsByRoleByUserId(role string, userId uint64) (sessions []SessionsW
 			return
 		}
 
-		session.Key = k
-		session.AccessToken = getTokenFromKey(k)
-
 		sessions = append(sessions, session)
 	}
 
 	return
 }
 
-func DeleteSession(key string) error {
+func (s *Session) DeleteSession(key string) error {
 	err := database.ConnRd.Del(key).Err()
 	if err != nil {
 		logger.Log.Error(err)
@@ -203,15 +258,4 @@ func DeleteSession(key string) error {
 	}
 
 	return nil
-}
-
-func getTokenFromKey(key string) string {
-	parts := strings.Split(key, ":") // Split by ":"
-
-	if len(parts) >= 4 {
-		token := parts[3] // Get the last part
-		return token
-	}
-
-	return key
 }

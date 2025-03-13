@@ -30,8 +30,10 @@ type Session struct {
 }
 
 var (
-	Err500FailedSetSession = errors.New(`failed to set session`)
-	Err400InvalidToken     = errors.New(`invalid access token`)
+	Err500FailedSetSession  = errors.New(`failed to set session`)
+	Err500FailedGetSession  = errors.New(`failed to get session`)
+	Err500FailedGetSessions = errors.New(`failed to get sessions`)
+	Err400InvalidToken      = errors.New(`invalid access token`)
 )
 
 // session:<role>:<user_id>:<access_token>
@@ -73,21 +75,26 @@ func GetSessionByToken(accessToken string) (session Session, err error) {
 		scannedKeys = append(scannedKeys, iter.Val())
 	}
 
+	if len(scannedKeys) == 0 {
+		err = Err400InvalidToken
+		return
+	}
+
 	for _, k := range scannedKeys {
 		var sessString string
 		errGet := database.ConnRd.Get(k).Scan(&sessString)
 		if errGet != nil {
-			logger.Log.Error(errGet, Err500FailedSetSession.Error())
+			logger.Log.Error(errGet, Err500FailedGetSession.Error())
 
-			err = Err500FailedSetSession
+			err = Err500FailedGetSession
 			return
 		}
 
 		errUnmarshal := json.Unmarshal([]byte(sessString), &session)
 		if errUnmarshal != nil {
-			logger.Log.Error(errUnmarshal, Err500FailedSetSession.Error())
+			logger.Log.Error(errUnmarshal, Err500FailedGetSession.Error())
 
-			err = Err500FailedSetSession
+			err = Err500FailedGetSession
 			return
 		}
 
@@ -99,11 +106,54 @@ func GetSessionByToken(accessToken string) (session Session, err error) {
 
 type SessionsWithKey struct {
 	Session
-	Key         string `json:"-"`
-	AccessToken string `json:"-"`
+	Key         string `json:"key,omitempty"`
+	AccessToken string `json:"access_token,omitempty"`
 }
 
-func GetSessionsByRoleByUserId(role string, userId uint64) (exist bool, session SessionsWithKey, err error) {
+func GetSessionByRoleByUserId(role string, userId uint64) (exist bool, session SessionsWithKey, err error) {
+	keyPattern := fmt.Sprintf("session:%s:%d:*", role, userId)
+
+	var scannedKeys []string
+
+	iter := database.ConnRd.Scan(0, keyPattern, 10).Iterator()
+	for iter.Next() {
+		scannedKeys = append(scannedKeys, iter.Val())
+	}
+
+	if len(scannedKeys) > 0 {
+		exist = true
+	}
+
+	for _, k := range scannedKeys {
+		var sessString string
+		errGet := database.ConnRd.Get(k).Scan(&sessString)
+		if errGet != nil {
+			logger.Log.Error(errGet, Err500FailedGetSession.Error())
+
+			err = Err500FailedGetSession
+			return
+		}
+
+		errUnmarshal := json.Unmarshal([]byte(sessString), &session)
+		if errUnmarshal != nil {
+			logger.Log.Error(errUnmarshal, Err500FailedGetSession.Error())
+
+			err = Err500FailedGetSession
+			return
+		}
+
+		session.Key = k
+		session.AccessToken = getTokenFromKey(k)
+
+		if !session.Approved {
+			break
+		}
+	}
+
+	return
+}
+
+func GetSessionsByRoleByUserId(role string, userId uint64) (sessions []SessionsWithKey, err error) {
 	keyPattern := fmt.Sprintf("session:%s:%d:*", role, userId)
 
 	var scannedKeys []string
@@ -117,28 +167,25 @@ func GetSessionsByRoleByUserId(role string, userId uint64) (exist bool, session 
 		var sessString string
 		errGet := database.ConnRd.Get(k).Scan(&sessString)
 		if errGet != nil {
-			logger.Log.Error(errGet, Err500FailedSetSession.Error())
+			logger.Log.Error(errGet, Err500FailedGetSessions.Error())
 
-			err = Err500FailedSetSession
+			err = Err500FailedGetSessions
 			return
 		}
 
+		var session SessionsWithKey
 		errUnmarshal := json.Unmarshal([]byte(sessString), &session)
 		if errUnmarshal != nil {
-			logger.Log.Error(errUnmarshal, Err500FailedSetSession.Error())
+			logger.Log.Error(errUnmarshal, Err500FailedGetSessions.Error())
 
-			err = Err500FailedSetSession
+			err = Err500FailedGetSessions
 			return
 		}
 
 		session.Key = k
 		session.AccessToken = getTokenFromKey(k)
 
-		exist = true
-
-		if !session.Approved {
-			break
-		}
+		sessions = append(sessions, session)
 	}
 
 	return
@@ -154,14 +201,3 @@ func getTokenFromKey(key string) string {
 
 	return key
 }
-
-// func GetSessionsByRoleByUserId(role string, userId uint64) ([]Session, error) {
-// 	var sess Session
-// 	var sessStr string
-
-// 	keyPattern := fmt.Sprintf("session:%s:%d:*", role, userId)
-
-// 	iter := database.ConnRd.Scan()
-
-// 	return sess, nil
-// }

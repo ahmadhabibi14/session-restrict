@@ -14,7 +14,9 @@ import (
 
 type App struct {
 	WebServer *fiber.App
-	SrvAuth   *service.Auth
+
+	SrvAuth    *service.Auth
+	SrvSession *service.Session
 }
 
 func NewApp() *App {
@@ -42,6 +44,7 @@ func (a *App) setupDatabases() {
 
 func (a *App) setupServices() {
 	a.SrvAuth = service.NewAuth()
+	a.SrvSession = service.NewSession()
 }
 
 func (a *App) setupHttp() {
@@ -52,6 +55,7 @@ func (a *App) setupHttp() {
 	controller.NewPages(webServer)
 	controller.NewAuth(webServer, a.SrvAuth)
 	controller.NewNotification(webServer)
+	controller.NewSession(webServer, a.SrvSession)
 
 	webServer.Static(`/assets`, `./assets`, fiber.Static{
 		Download:      false,

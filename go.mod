@@ -15,6 +15,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/mssola/useragent v1.0.0
 	github.com/sirupsen/logrus v1.9.3
+	github.com/valyala/fasthttp v1.51.0
 	golang.org/x/crypto v0.36.0
 )
 
@@ -38,7 +39,6 @@ require (
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/tinylib/msgp v1.2.5 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.51.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect

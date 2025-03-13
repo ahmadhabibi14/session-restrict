@@ -43,7 +43,7 @@ func (a *Auth) SignIn(in request.ReqAuthSignIn) (out response.ResAuthSignIn, err
 		return
 	}
 
-	exist, sess, err := sessions.GetSessionsByRoleByUserId(usr.Role, usr.Id)
+	exist, sess, err := sessions.GetSessionByRoleByUserId(usr.Role, usr.Id)
 	if err != nil {
 		out.SetStatus(http.StatusInternalServerError)
 		return

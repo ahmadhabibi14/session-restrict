@@ -114,16 +114,12 @@
   }
 
   async function fetchSSE() {
-    return await fetch("/api/notification/user", {
+    const response  = await await fetch("/api/notification/user", {
       method: "GET",
       headers: {
         accept: "text/event-stream"
       }
     });
-  }
-
-  (async () => {
-    const response  = await fetchSSE();
     const reader    = response.body.getReader();
     const decoder   = new TextDecoder();
     
@@ -149,5 +145,25 @@
         return;
       }
     }
+  }
+
+  async function fetchSessions() {
+    await fetch("/api/sessions", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    }).then(async (res) => {
+      const data = await res.json();
+
+      console.log(data);
+    }).catch(err => {
+      console.error(err);
+    })
+  }
+
+  (async () => {
+    await fetchSessions();
+    await fetchSSE();
   })();
 </script>

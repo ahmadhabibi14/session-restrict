@@ -3,14 +3,43 @@ package controller
 import (
 	"fmt"
 	"net/http"
+	"session-restrict/src/dto/response"
 	"session-restrict/src/lib/logger"
 	"session-restrict/src/repo/sessions"
+	"session-restrict/src/service"
 	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/mssola/useragent"
 )
+
+type Session struct {
+	srvSession *service.Session
+}
+
+func NewSession(app *fiber.App, srvSession *service.Session) {
+	handler := &Session{srvSession}
+
+	app.Get("/api/sessions", mustLoggedInApi, handler.GetSessions)
+}
+
+func (a *Session) GetSessions(c *fiber.Ctx) error {
+	session := getSession(c)
+
+	out, err := a.srvSession.GetSessionsByUserId(session.UserId, session.Role)
+	if err != nil {
+		return c.Status(out.StatusCode).JSON(response.ResponseCommon{
+			StatusCode: out.StatusCode,
+			Error:      err.Error(),
+		})
+	}
+
+	out.SetMessage(`Sessions obtained !`)
+	out.SetStatus(http.StatusOK)
+
+	return c.Status(http.StatusOK).JSON(out)
+}
 
 const (
 	DeviceDesktop = "desktop"
@@ -38,6 +67,29 @@ func mustLoggedIn(c *fiber.Ctx) error {
 		return c.Render("forbidden", fiber.Map{
 			`Title`: fmt.Sprintf("%d - %s", fiber.StatusForbidden, `🚫 Access Denied`),
 		}, "_layout")
+	}
+
+	return c.Next()
+}
+
+func mustLoggedInApi(c *fiber.Ctx) error {
+	accessToken := c.Cookies(CookieAccessToken)
+	if accessToken == `` {
+		return c.Redirect("/signin", http.StatusPermanentRedirect)
+	}
+
+	sess, err := sessions.GetSessionByToken(accessToken)
+	if err != nil {
+		RemoveAuthCookie(c)
+		c.ClearCookie(CookieAccessToken)
+		return c.Redirect("/", http.StatusPermanentRedirect)
+	}
+
+	if !sess.Approved {
+		return c.Status(http.StatusUnauthorized).JSON(response.ResponseCommon{
+			StatusCode: http.StatusUnauthorized,
+			Error:      "unauthorized",
+		})
 	}
 
 	return c.Next()

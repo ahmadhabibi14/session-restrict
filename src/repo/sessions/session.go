@@ -32,10 +32,11 @@ type Session struct {
 }
 
 var (
-	Err500FailedSetSession  = errors.New(`failed to set session`)
-	Err500FailedGetSession  = errors.New(`failed to get session`)
-	Err500FailedGetSessions = errors.New(`failed to get sessions`)
-	Err400InvalidToken      = errors.New(`invalid access token`)
+	Err500FailedSetSession    = errors.New(`failed to set session`)
+	Err500FailedGetSession    = errors.New(`failed to get session`)
+	Err500FailedGetSessions   = errors.New(`failed to get sessions`)
+	Err500FailedDeleteSession = errors.New(`failed to delete session`)
+	Err400InvalidToken        = errors.New(`invalid access token`)
 )
 
 // session:<role>:<user_id>:<access_token>
@@ -191,6 +192,17 @@ func GetSessionsByRoleByUserId(role string, userId uint64) (sessions []SessionsW
 	}
 
 	return
+}
+
+func DeleteSession(key string) error {
+	err := database.ConnRd.Del(key).Err()
+	if err != nil {
+		logger.Log.Error(err)
+
+		return Err500FailedDeleteSession
+	}
+
+	return nil
 }
 
 func getTokenFromKey(key string) string {

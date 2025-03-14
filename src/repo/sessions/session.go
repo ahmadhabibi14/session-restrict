@@ -184,10 +184,6 @@ func (s *Session) GetSessionByRoleByUserId() (session Session, isExist bool, err
 		scannedKeys = append(scannedKeys, iter.Val())
 	}
 
-	if len(scannedKeys) > 0 {
-		isExist = true
-	}
-
 	for _, k := range scannedKeys {
 		var sessString string
 		errGet := database.ConnRd.Get(k).Scan(&sessString)
@@ -206,7 +202,8 @@ func (s *Session) GetSessionByRoleByUserId() (session Session, isExist bool, err
 			return
 		}
 
-		if !session.Approved {
+		if session.Approved {
+			isExist = true
 			break
 		}
 	}

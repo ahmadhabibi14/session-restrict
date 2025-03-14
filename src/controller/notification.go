@@ -19,7 +19,7 @@ func NewNotification(app *fiber.App) {
 	handler := &Notification{}
 
 	app.Route("/api/notification", func(router fiber.Router) {
-		router.Get("/user", mustLoggedInAjax, handler.ByUserId)
+		router.Get("/user", mustLoggedInAjaxUnapproved, handler.ByUserId)
 	})
 }
 
@@ -49,6 +49,7 @@ func (n *Notification) ByUserId(c *fiber.Ctx) error {
 
 			event := converter.AnyToString(out[`event`])
 			var dataBytes []byte
+			var payload string
 
 			switch event {
 			case sessions.EventNewSession:
@@ -64,11 +65,18 @@ func (n *Notification) ByUserId(c *fiber.Ctx) error {
 					logger.Log.Error(err)
 					continue
 				}
+
+				payload = GetSSEPayload(sessions.EventNewSession, string(dataBytes))
+			case sessions.EventNewSessionApproved:
+				dataBytes = []byte(msg.Payload)
+				payload = GetSSEPayload(sessions.EventNewSessionApproved, string(dataBytes))
+			case sessions.EventNewSessionDeleted:
+				dataBytes = []byte(msg.Payload)
+				payload = GetSSEPayload(sessions.EventNewSessionDeleted, string(dataBytes))
 			default:
 				continue
 			}
 
-			payload := GetSSEPayload(sessions.EventNewSession, string(dataBytes))
 			_, err = w.WriteString(payload)
 			if err != nil {
 				logger.Log.Error(err, `failed to write data`)

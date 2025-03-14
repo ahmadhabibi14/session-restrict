@@ -11,15 +11,16 @@ import (
 )
 
 type Auth struct {
-	auth *service.Auth
+	srvAuth *service.Auth
 }
 
-func NewAuth(app *fiber.App, auth *service.Auth) {
-	handler := &Auth{auth}
+func NewAuth(app *fiber.App, srvAuth *service.Auth) {
+	handler := &Auth{srvAuth}
 
 	app.Route("/api/auth", func(router fiber.Router) {
 		router.Post("/signin", handler.SignIn)
 		router.Post("/signup", handler.SignUp)
+		router.Post("/signout", handler.SignOut)
 	})
 }
 
@@ -38,7 +39,7 @@ func (a *Auth) SignIn(c *fiber.Ctx) error {
 	in.OS = GetOS(c)
 	in.Device = GetDevice(c)
 
-	out, err := a.auth.SignIn(in)
+	out, err := a.srvAuth.SignIn(in)
 	if err != nil {
 		return c.Status(out.StatusCode).JSON(response.ResponseCommon{
 			StatusCode: out.StatusCode,
@@ -63,7 +64,7 @@ func (a *Auth) SignUp(c *fiber.Ctx) error {
 		})
 	}
 
-	out, err := a.auth.SignUp(in)
+	out, err := a.srvAuth.SignUp(in)
 	if err != nil {
 		return c.Status(out.StatusCode).JSON(response.ResponseCommon{
 			StatusCode: out.StatusCode,
@@ -72,6 +73,25 @@ func (a *Auth) SignUp(c *fiber.Ctx) error {
 	}
 
 	out.SetMessage(`Sign Up successfully !`)
+	out.SetStatus(http.StatusOK)
+
+	return c.Status(http.StatusOK).JSON(out)
+}
+
+func (a *Auth) SignOut(c *fiber.Ctx) error {
+	session := getSession(c)
+
+	out, err := a.srvAuth.SignOut(session.UserId, session.AccessToken, session.Role)
+	if err != nil {
+		return c.Status(out.StatusCode).JSON(response.ResponseCommon{
+			StatusCode: out.StatusCode,
+			Error:      err.Error(),
+		})
+	}
+
+	RemoveAuthCookie(c)
+
+	out.SetMessage(`Sign Out Successful !`)
 	out.SetStatus(http.StatusOK)
 
 	return c.Status(http.StatusOK).JSON(out)

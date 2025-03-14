@@ -1,6 +1,29 @@
 <div class="flex flex-col justify-center items-center w-full mx-auto">
   <div class="flex flex-col gap-6 w-fit">
-    <h1 class="text-3xl font-bold text-center">Session Restriction</h1>
+    <div class="flex flex-col gap-2 justify-center items-center">
+      <h1 class="text-3xl font-bold text-center">Session Restriction</h1>
+      <button
+        id="signout"
+        onclick="signout()"
+        class="w-fit border-2 border-neutral-900 text-xs flex flex-row gap-2 justify-center items-center py-1.5 px-2.5 rounded-md bg-red-500 hover:bg-red-400 text-white disabled:bg-red-400 disabled:cursor-not-allowed"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="w-4 h-4"
+        >
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span>Sign Out</span>
+      </button>
+    </div>
     <div id="sessions-container" class="grid grid-cols-1 md:grid-cols-3 gap-5">
       <p>No Sessions</p>
     </div>
@@ -8,6 +31,33 @@
 </div>
 
 <script>
+  const signoutElement = document.getElementById("signout");
+
+  function deleteCookie(name, path = "") {
+    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path};`;
+  }
+
+  async function signout() {
+    signoutElement.disabled = true;
+
+    await fetch("/api/auth/signout", {
+      method: "POST",
+    })
+      .then(() => {
+        deleteCookie("access_token", "");
+        setTimeout(() => {
+          window.location.href = "/signin";
+        }, 1500);
+      })
+      .catch((err) => {
+        console.error(err);
+      })
+      .finally(() => {
+        deleteCookie("access_token", "");
+        signoutElement.disabled = false;
+      });
+  }
+
   function dateFormatted(dateString) {
     const date = new Date(dateString);
     const formattedDate = date.toLocaleString("en-GB", {
@@ -41,10 +91,40 @@
     return event;
   }
 
-  const EventNewSession     = "new_session";
-  const EventSessionRemoved = "session_removed";
+  const EventNewSession         = "new_session";
+  const EventNewSessionApproved = `new_session_approved`;
+  const EventNewSessionDeleted  = `new_session_deleted`;
 
   async function fetchSSE() {
+    const source = new EventSource("/api/notification/user");
+
+    source.onopen = function (evt) {
+      console.log("[OPEN] ", evt);
+    }
+
+    source.onmessage = function (evt) {
+      console.log("[MESSAGE] ", evt);
+    }
+
+    source.onerror = function (evt) {
+      console.error("[ERROR] ", evt);
+    }
+
+    source.addEventListener(EventNewSession, (evt) => {
+      console.log("[NEW SESSION SIGN IN] ", evt);
+      
+    })
+
+    source.addEventListener(EventNewSessionApproved, (evt) => {
+      console.log("[NEW SESSION APPROVED] ", evt);
+      setTimeout(() => window.open("http://localhost:4000/"), 1200);
+    })
+
+    source.addEventListener(EventNewSessionDeleted, (evt) => {
+      console.log("[NEW SESSION DELETED] ", evt);
+      setTimeout(() => window.open("http://localhost:4000/"), 1200);
+    })
+
     const response = await await fetch("/api/notification/user", {
       method: "GET",
       headers: {
@@ -58,36 +138,28 @@
       await reader
         .read()
         .then(async ({ done, value }) => {
-          if (done) {
-            response = await fetchSSE();
-          }
-
           const resp = decoder.decode(value, { stream: true });
 
           const respJson = parseSSEMessage(resp);
 
           if (respJson.event) {
-            const event = (respJson.event);
+            const event = respJson.event;
             switch (event) {
               case EventNewSession:
-              const sess = /** @type {Session} */ (respJson.data);
-
-              const elmSessionsContainer = document.getElementById("sessions-container");
-              const elmSessionContainer = document.createElement("div");
-              elmSessionContainer.classList.add("session-container");
-              elmSessionContainer.id = `session-${sess.access_token}`
-              elmSessionContainer.innerHTML = generateHtmlSession(sess);
-              elmSessionsContainer.appendChild(elmSessionContainer);
+                
+              case (EventNewSessionApproved, EventNewSessionDeleted):
+                console.log("Message: ", respJson);
             }
           }
         })
         .catch(async (err) => {
           console.error(err);
-          response = await fetchSSE();
+          return;
         });
 
+      setTimeout(() => {}, 600);
       if (response.status !== 200) {
-        return;
+        break;
       }
     }
   }
@@ -177,7 +249,9 @@
                         Approved
                       </td>
                       <td class="px-4 py-2 whitespace-nowrap">
-                        <span class="badge-${Boolean(sess.approved) ? 'true' : 'false'}">${sess.approved}</span>
+                        <span class="badge-${
+                          Boolean(sess.approved) ? "true" : "false"
+                        }">${sess.approved}</span>
                       </td>
                     </tr>
                     <tr>
@@ -273,7 +347,7 @@
     for (const sess of sessions || []) {
       const elmSessionContainer = document.createElement("div");
       elmSessionContainer.classList.add("session-container");
-      elmSessionContainer.id = `session-${sess.access_token}`
+      elmSessionContainer.id = `session-${sess.access_token}`;
       elmSessionContainer.innerHTML = generateHtmlSession(sess);
 
       elmSessionsContainer.appendChild(elmSessionContainer);
@@ -296,19 +370,23 @@
         user_id: userId,
         role: role,
       }),
-    }).then(async (res) => {
-      if (res.status !== 200) {
-        console.error(res);
-        return;
-      }
-      const resJson = await res.json();
-      const resData = /** @type {Session} */ (resJson.data);
+    })
+      .then(async (res) => {
+        if (res.status !== 200) {
+          console.error(res);
+          return;
+        }
+        const resJson = await res.json();
+        const resData = /** @type {Session} */ (resJson.data);
 
-      const elmSessionContainer = document.getElementById(`session-${resData.access_token}`);
-      elmSessionContainer.innerHTML = generateHtmlSession(resData); 
-    }).catch(err => {
-      console.error(err);
-    });
+        const elmSessionContainer = document.getElementById(
+          `session-${resData.access_token}`
+        );
+        elmSessionContainer.innerHTML = generateHtmlSession(resData);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
   }
 
   /**
@@ -327,19 +405,23 @@
         user_id: userId,
         role: role,
       }),
-    }).then(async (res) => {
-      if (res.status !== 200) {
-        console.error(res);
-        return;
-      }
-      const resJson = await res.json();
-      console.log("Response: ", resJson);
+    })
+      .then(async (res) => {
+        if (res.status !== 200) {
+          console.error(res);
+          return;
+        }
+        const resJson = await res.json();
+        console.log("Response: ", resJson);
 
-      const elmSessionContainer = document.getElementById(`session-${accessToken}`);
-      elmSessionContainer.remove();
-    }).catch(err => {
-      console.error(err);
-    });
+        const elmSessionContainer = document.getElementById(
+          `session-${accessToken}`
+        );
+        elmSessionContainer.remove();
+      })
+      .catch((err) => {
+        console.error(err);
+      });
   }
 
   async function fetchSessions() {

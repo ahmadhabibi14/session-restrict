@@ -3,9 +3,11 @@ package service
 import (
 	"errors"
 	"net/http"
+	"os"
 	"session-restrict/helper"
 	"session-restrict/src/dto/request"
 	"session-restrict/src/dto/response"
+	"session-restrict/src/external/mailer"
 	"session-restrict/src/repo/sessions"
 	"session-restrict/src/repo/users"
 	"time"
@@ -45,23 +47,10 @@ func (a *Auth) SignIn(in request.ReqAuthSignIn) (out response.ResAuthSignIn, err
 	sess := sessions.NewSession()
 	sess.Role = usr.Role
 	sess.UserId = usr.Id
-	session, isExist, err := sess.GetSessionByRoleByUserId()
+	_, isExist, err := sess.GetSessionByRoleByUserId()
 	if err != nil {
 		out.SetStatus(http.StatusInternalServerError)
 		return
-	}
-
-	if isExist {
-		notifData := sessions.NotificationNewSession{
-			Event: sessions.EventNewSession,
-			Data:  session,
-		}
-
-		err = sessions.PublishNewSession(notifData, usr.Id)
-		if err != nil {
-			out.SetStatus(http.StatusInternalServerError)
-			return
-		}
 	}
 
 	future := time.Now().AddDate(0, 2, 0)
@@ -85,6 +74,29 @@ func (a *Auth) SignIn(in request.ReqAuthSignIn) (out response.ResAuthSignIn, err
 	if err != nil {
 		out.SetStatus(http.StatusInternalServerError)
 		return
+	}
+
+	if isExist {
+		notifData := sessions.NotificationNewSession{
+			Event: sessions.EventNewSession,
+			Data:  *sess,
+		}
+
+		err = sessions.PublishNewSession(notifData, usr.Id)
+		if err != nil {
+			out.SetStatus(http.StatusInternalServerError)
+			return
+		}
+
+		resetPassLink := os.Getenv("WEB_DOMAIN") + "/reset-password"
+		emailTitle := "⚠️ Peringatan: Aktivitas Login Tidak Dikenal"
+		emailContent := mailer.HtmlOtpNewSessionLoggedIn(
+			emailTitle, resetPassLink, usr.FullName, time.Now().Format(time.DateTime),
+			(in.Device + `, ` + in.OS), in.IpV4, accessToken,
+		)
+
+		mailService := mailer.NewMailerService()
+		mailService.SendMailHTML([]string{usr.Email}, []string{}, emailTitle, emailContent)
 	}
 
 	out.AccessToken = accessToken

@@ -39,7 +39,10 @@ func (a *Session) Approve(c *fiber.Ctx) error {
 		})
 	}
 
-	out, err := a.srvSession.Approve(in)
+	session := getSession(c)
+
+	fmt.Println(`In :`, in)
+	out, err := a.srvSession.Approve(in, session.UserId)
 	if err != nil {
 		return c.Status(out.StatusCode).JSON(response.ResponseCommon{
 			StatusCode: out.StatusCode,
@@ -62,7 +65,8 @@ func (a *Session) Delete(c *fiber.Ctx) error {
 		})
 	}
 
-	out, err := a.srvSession.Delete(in)
+	session := getSession(c)
+	out, err := a.srvSession.Delete(in, session.UserId)
 	if err != nil {
 		return c.Status(out.StatusCode).JSON(response.ResponseCommon{
 			StatusCode: out.StatusCode,
@@ -105,7 +109,7 @@ const CookieAccessToken = `access_token`
 func mustLoggedIn(c *fiber.Ctx) error {
 	accessToken := c.Cookies(CookieAccessToken)
 	if accessToken == `` {
-		return c.Redirect("/signin", http.StatusPermanentRedirect)
+		return c.Redirect("/signin", http.StatusTemporaryRedirect)
 	}
 
 	sess := sessions.NewSession()
@@ -115,7 +119,7 @@ func mustLoggedIn(c *fiber.Ctx) error {
 	if err != nil {
 		RemoveAuthCookie(c)
 		c.ClearCookie(CookieAccessToken)
-		return c.Redirect("/", http.StatusPermanentRedirect)
+		return c.Redirect("/", http.StatusTemporaryRedirect)
 	}
 
 	if !session.Approved {
@@ -157,6 +161,29 @@ func mustLoggedInAjax(c *fiber.Ctx) error {
 	return c.Next()
 }
 
+func mustLoggedInAjaxUnapproved(c *fiber.Ctx) error {
+	accessToken := c.Cookies(CookieAccessToken)
+	if accessToken == `` {
+		return c.Status(http.StatusUnauthorized).JSON(response.ResponseCommon{
+			StatusCode: http.StatusUnauthorized,
+			Error:      "unauthorized",
+		})
+	}
+
+	sess := sessions.NewSession()
+	sess.AccessToken = accessToken
+
+	_, err := sess.GetSessionByToken()
+	if err != nil {
+		return c.Status(http.StatusUnauthorized).JSON(response.ResponseCommon{
+			StatusCode: http.StatusUnauthorized,
+			Error:      "unauthorized",
+		})
+	}
+
+	return c.Next()
+}
+
 func getSession(c *fiber.Ctx) sessions.Session {
 	accessToken := c.Cookies(CookieAccessToken)
 
@@ -177,7 +204,7 @@ func mustLoggedOut(c *fiber.Ctx) error {
 		return c.Next()
 	}
 
-	return c.Redirect(`/`, http.StatusPermanentRedirect)
+	return c.Redirect(`/`, http.StatusTemporaryRedirect)
 }
 
 func SetAuthCookie(c *fiber.Ctx, tokenString string, expiredAt time.Time) {
@@ -193,6 +220,7 @@ func SetAuthCookie(c *fiber.Ctx, tokenString string, expiredAt time.Time) {
 }
 
 func RemoveAuthCookie(c *fiber.Ctx) {
+	c.ClearCookie(CookieAccessToken)
 	c.Cookie(&fiber.Cookie{
 		Name:     CookieAccessToken,
 		Value:    "",

@@ -2,7 +2,6 @@ package mailer
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"session-restrict/src/lib/logger"
 	"strconv"
@@ -72,9 +71,6 @@ func (ms *MailerService) SendMailText(to []string, cc []string, subject, message
 	msg.SetBodyString(mail.TypeTextPlain, message)
 	msg.SetImportance(mail.ImportanceHigh)
 
-	msg.WriteTo(os.Stdout)
-	fmt.Println()
-
 	err = ms.client.DialAndSend(msg)
 	if err != nil {
 		logger.Log.Error(err, ErrSendMail.Error())
@@ -109,9 +105,6 @@ func (ms *MailerService) SendMailHTML(to []string, cc []string, subject, htmlStr
 	msg.Subject(subject)
 	msg.SetBodyString(mail.TypeTextHTML, htmlString)
 	msg.SetImportance(mail.ImportanceHigh)
-
-	msg.WriteTo(os.Stdout)
-	fmt.Println()
 
 	err = ms.client.DialAndSend(msg)
 	if err != nil {

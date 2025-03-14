@@ -15,4 +15,5 @@ func SetSSEHeaders(c *fiber.Ctx) {
 	c.Set("Cache-Control", "no-cache")
 	c.Set("Connection", "keep-alive")
 	c.Set("Transfer-Encoding", "chunked")
+	c.Set("Content-Encoding", "none")
 }

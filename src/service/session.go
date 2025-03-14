@@ -30,11 +30,17 @@ func (s *Session) GetSessions(userId uint64, role string) (out response.ResGetSe
 	return
 }
 
-func (s *Session) Approve(in request.ReqSessionApprove) (out response.ResSessionApprove, err error) {
+func (s *Session) Approve(in request.ReqSessionApprove, userId uint64) (out response.ResSessionApprove, err error) {
 	sess := sessions.NewSession()
 
-	key := sess.GenerateKey(in.Role, in.UserId, in.AccessToken)
+	key := sess.GenerateKey(in.Role, userId, in.AccessToken)
 	session, err := sess.Approve(key)
+	if err != nil {
+		out.SetStatus(http.StatusInternalServerError)
+		return
+	}
+
+	err = sessions.PublishNewSessionApproved(`{}`, in.UserId)
 	if err != nil {
 		out.SetStatus(http.StatusInternalServerError)
 		return
@@ -45,11 +51,17 @@ func (s *Session) Approve(in request.ReqSessionApprove) (out response.ResSession
 	return
 }
 
-func (s *Session) Delete(in request.ReqSessionDelete) (out response.ResponseCommon, err error) {
+func (s *Session) Delete(in request.ReqSessionDelete, userId uint64) (out response.ResponseCommon, err error) {
 	sess := sessions.NewSession()
 
-	key := sess.GenerateKey(in.Role, in.UserId, in.AccessToken)
+	key := sess.GenerateKey(in.Role, userId, in.AccessToken)
 	err = sess.DeleteSession(key)
+	if err != nil {
+		out.SetStatus(http.StatusInternalServerError)
+		return
+	}
+
+	err = sessions.PublishNewSessionDeleted(`{}`, in.UserId)
 	if err != nil {
 		out.SetStatus(http.StatusInternalServerError)
 		return

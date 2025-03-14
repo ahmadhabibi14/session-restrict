@@ -16,7 +16,6 @@ const (
 )
 
 func GetChannelUserNotif(userId uint64) string {
-	fmt.Println(`user id: `, userId)
 	return fmt.Sprintf("user.notification.%v", userId)
 }
 
@@ -57,7 +56,6 @@ func PublishNewSession(in NotificationNewSession, userId uint64) error {
 }
 
 func PublishNewSessionApproved(data string, userId uint64) error {
-	fmt.Println(`user id PublishNewSessionApproved: `, userId)
 	channel := GetChannelUserNotif(userId)
 	in := NotificationNewSessionApproved{
 		Event: EventNewSessionApproved,
@@ -70,7 +68,6 @@ func PublishNewSessionApproved(data string, userId uint64) error {
 		return ErrPublishNewSession
 	}
 
-	fmt.Println(`Channel :`, channel)
 	err = database.ConnRd.Publish(channel, dataByte).Err()
 	if err != nil {
 		logger.Log.Error(err)

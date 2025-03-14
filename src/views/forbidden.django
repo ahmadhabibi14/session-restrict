@@ -49,12 +49,12 @@
 
     source.addEventListener(EventNewSessionApproved, (evt) => {
       console.log("[NEW SESSION APPROVED] ", evt);
-      setTimeout(() => window.open("http://localhost:4000/"), 1200);
+      setTimeout(() => window.location.href = "/", 1200);
     })
 
     source.addEventListener(EventNewSessionDeleted, (evt) => {
       console.log("[NEW SESSION DELETED] ", evt);
-      setTimeout(() => window.open("http://localhost:4000/"), 1200);
+      setTimeout(() => window.location.href = "/", 1200);
     })
   })();
 </script>

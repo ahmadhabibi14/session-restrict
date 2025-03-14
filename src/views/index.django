@@ -31,6 +31,15 @@
 </div>
 
 <script>
+  function getCookie(name) {
+    const cookies = document.cookie.split("; ");
+    for (let cookie of cookies) {
+      const [key, value] = cookie.split("=");
+      if (key === name) return decodeURIComponent(value);
+    }
+    return null;
+  }
+
   const signoutElement = document.getElementById("signout");
 
   function deleteCookie(name, path = "") {
@@ -91,77 +100,46 @@
     return event;
   }
 
-  const EventNewSession         = "new_session";
+  const EventNewSession = "new_session";
   const EventNewSessionApproved = `new_session_approved`;
-  const EventNewSessionDeleted  = `new_session_deleted`;
-
+  const EventNewSessionDeleted = `new_session_deleted`;
   async function fetchSSE() {
     const source = new EventSource("/api/notification/user");
 
     source.onopen = function (evt) {
       console.log("[OPEN] ", evt);
-    }
+    };
 
     source.onmessage = function (evt) {
       console.log("[MESSAGE] ", evt);
-    }
+    };
 
     source.onerror = function (evt) {
       console.error("[ERROR] ", evt);
-    }
+    };
 
     source.addEventListener(EventNewSession, (evt) => {
       console.log("[NEW SESSION SIGN IN] ", evt);
-      
-    })
+
+      const dataRaw = evt.data;
+      const sess = /** @type {Session} */ (JSON.parse(dataRaw));
+
+      const elmSessionsContainer =
+        document.getElementById("sessions-container");
+      const elmSessionContainer = document.createElement("div");
+      elmSessionContainer.classList.add("session-container");
+      elmSessionContainer.id = `session-${sess.access_token}`;
+      elmSessionContainer.innerHTML = generateHtmlSession(sess);
+      elmSessionsContainer.appendChild(elmSessionContainer);
+    });
 
     source.addEventListener(EventNewSessionApproved, (evt) => {
       console.log("[NEW SESSION APPROVED] ", evt);
-      setTimeout(() => window.open("http://localhost:4000/"), 1200);
-    })
+    });
 
     source.addEventListener(EventNewSessionDeleted, (evt) => {
       console.log("[NEW SESSION DELETED] ", evt);
-      setTimeout(() => window.open("http://localhost:4000/"), 1200);
-    })
-
-    const response = await await fetch("/api/notification/user", {
-      method: "GET",
-      headers: {
-        accept: "text/event-stream",
-      },
     });
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-
-    while (true) {
-      await reader
-        .read()
-        .then(async ({ done, value }) => {
-          const resp = decoder.decode(value, { stream: true });
-
-          const respJson = parseSSEMessage(resp);
-
-          if (respJson.event) {
-            const event = respJson.event;
-            switch (event) {
-              case EventNewSession:
-                
-              case (EventNewSessionApproved, EventNewSessionDeleted):
-                console.log("Message: ", respJson);
-            }
-          }
-        })
-        .catch(async (err) => {
-          console.error(err);
-          return;
-        });
-
-      setTimeout(() => {}, 600);
-      if (response.status !== 200) {
-        break;
-      }
-    }
   }
 
   /**

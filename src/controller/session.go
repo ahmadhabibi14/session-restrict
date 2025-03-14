@@ -41,7 +41,6 @@ func (a *Session) Approve(c *fiber.Ctx) error {
 
 	session := getSession(c)
 
-	fmt.Println(`In :`, in)
 	out, err := a.srvSession.Approve(in, session.UserId)
 	if err != nil {
 		return c.Status(out.StatusCode).JSON(response.ResponseCommon{

@@ -1,8 +1,11 @@
 package converter
 
 import (
+	"session-restrict/src/lib/logger"
 	"strconv"
 	"time"
+
+	"github.com/goccy/go-json"
 )
 
 func AnyToInt64(x any) int64 {
@@ -251,4 +254,13 @@ func AnyToString(x any) string {
 	}
 
 	return val
+}
+
+func AnyToJsonPretty(any any) string {
+	res, err := json.MarshalIndent(any, ``, `  `)
+	if err != nil {
+		logger.Log.Error(err)
+		return ""
+	}
+	return string(res)
 }

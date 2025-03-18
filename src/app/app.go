@@ -35,10 +35,16 @@ func (a *App) Run() {
 }
 
 func (a *App) setupDatabases() {
-	database.ConnectPostgresSQL()
+	err := database.ConnectPostgresSQL()
+	if err != nil {
+		logger.Log.Panic(err, `failed to connect to PostgreSQL`)
+	}
 	logger.Log.Info(`Connected to PostgreSQL`)
 
-	database.ConnectRedis()
+	err = database.ConnectRedis()
+	if err != nil {
+		logger.Log.Panic(err, `failed to connect to Redis`)
+	}
 	logger.Log.Info(`Connected to Redis`)
 }
 

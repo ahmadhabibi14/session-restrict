@@ -1,0 +1,46 @@
+name: Build and Test 🛠️
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  GoSetup:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '^1.23.4'
+      - run: |
+          go mod tidy
+  GoBuild:
+    timeout-minutes: 10
+    needs: GoSetup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - run: go build -v ./...
+  GoTest:
+    timeout-minutes: 20
+    needs: GoSetup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - run: |
+          go test ./tests/... -v
+  GoTestCoverage:
+    timeout-minutes: 20
+    needs: GoTest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - run: |
+          go test -coverpkg=./src/repo/... ./tests

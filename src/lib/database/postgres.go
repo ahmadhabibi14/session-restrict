@@ -3,7 +3,6 @@ package database
 import (
 	"fmt"
 	"os"
-	"session-restrict/src/lib/logger"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -11,7 +10,7 @@ import (
 
 var ConnPg *sqlx.DB
 
-func ConnectPostgresSQL() {
+func ConnectPostgresSQL() error {
 	postgresDbName := os.Getenv("POSTGRES_DB")
 	postgresUser := os.Getenv("POSTGRES_USER")
 	postgresPassword := os.Getenv("POSTGRES_PASSWORD")
@@ -23,11 +22,8 @@ func ConnectPostgresSQL() {
 		postgresUser, postgresPassword, postgresDbName, postgresHost, postgresPort,
 	)
 
-	ConnPg = sqlx.MustConnect("postgres", postgresURL)
+	var err error
+	ConnPg, err = sqlx.Connect("postgres", postgresURL)
 
-	err := ConnPg.Ping()
-	if err != nil {
-		ConnPg.Close()
-		logger.Log.Fatal(err, `failed to test connection`)
-	}
+	return err
 }

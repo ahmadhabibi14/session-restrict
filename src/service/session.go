@@ -40,7 +40,10 @@ func (s *Session) Approve(in request.ReqSessionApprove, userId uint64) (out resp
 		return
 	}
 
-	err = sessions.PublishNewSessionApproved(`{}`, in.UserId)
+	err = sessions.PublishNewSessionApproved(sessions.NotificationNewSessionApproved{
+		Event: sessions.EventNewSessionApproved,
+		Data:  *sess,
+	}, in.UserId)
 	if err != nil {
 		out.SetStatus(http.StatusInternalServerError)
 		return
@@ -55,13 +58,18 @@ func (s *Session) Delete(in request.ReqSessionDelete, userId uint64) (out respon
 	sess := sessions.NewSession()
 
 	key := sess.GenerateKey(in.Role, userId, in.AccessToken)
+	session, err := sess.GetSession(key)
+
 	err = sess.DeleteSession(key)
 	if err != nil {
 		out.SetStatus(http.StatusInternalServerError)
 		return
 	}
 
-	err = sessions.PublishNewSessionDeleted(`{}`, in.UserId)
+	err = sessions.PublishNewSessionDeleted(sessions.NotificationNewSessionDeleted{
+		Event: sessions.EventNewSessionDeleted,
+		Data:  session,
+	}, in.UserId)
 	if err != nil {
 		out.SetStatus(http.StatusInternalServerError)
 		return

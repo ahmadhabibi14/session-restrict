@@ -7,7 +7,8 @@ import (
 	"session-restrict/helper"
 	"session-restrict/src/dto/request"
 	"session-restrict/src/dto/response"
-	"session-restrict/src/external/mailer"
+	"session-restrict/src/integration/mailer"
+	"session-restrict/src/lib/logger"
 	"session-restrict/src/repo/sessions"
 	"session-restrict/src/repo/users"
 	"time"
@@ -95,8 +96,18 @@ func (a *Auth) SignIn(in request.ReqAuthSignIn) (out response.ResAuthSignIn, err
 			(in.Device + `, ` + in.OS), in.IpV4, accessToken,
 		)
 
-		mailService := mailer.NewMailerService()
-		mailService.SendMailHTML([]string{usr.Email}, []string{}, emailTitle, emailContent)
+		mailService, err := mailer.NewMailer()
+		if err != nil {
+			logger.Log.Error(err)
+		}
+
+		if err = mailService.SendMailHTML(
+			[]string{usr.Email},
+			[]string{},
+			emailTitle, emailContent,
+		); err != nil {
+			logger.Log.Error(err)
+		}
 	}
 
 	out.AccessToken = accessToken
@@ -145,6 +156,17 @@ func (a *Auth) SignOut(userId uint64, accessToken, role string) (out response.Re
 
 	key := sess.GenerateKey(role, userId, accessToken)
 	err = sess.DeleteSession(key)
+	if err != nil {
+		out.SetStatus(http.StatusInternalServerError)
+		return
+	}
+
+	notifData := sessions.NotificationNewSessionDeleted{
+		Event: sessions.EventNewSessionDeleted,
+		Data:  *sess,
+	}
+
+	err = sessions.PublishNewSessionDeleted(notifData, userId)
 	if err != nil {
 		out.SetStatus(http.StatusInternalServerError)
 		return

@@ -1,7 +1,6 @@
 package mailer
 
 import (
-	"errors"
 	"os"
 	"session-restrict/src/lib/logger"
 	"strconv"
@@ -10,41 +9,34 @@ import (
 	"github.com/wneessen/go-mail"
 )
 
-type MailerService struct {
+type Mailhog struct {
 	client *mail.Client
 }
 
-func NewMailerService() *MailerService {
-	port, err := strconv.Atoi(os.Getenv(`SMTP_PORT`))
+func NewMailhog() (*Mailhog, error) {
+	port, err := strconv.Atoi(os.Getenv(`MAILHOG_PORT`))
 	if err != nil {
 		port = 456
 	}
 
+	mailhog := &Mailhog{}
+
 	client, err := mail.NewClient(
-		os.Getenv(`SMTP_HOST`),
-		mail.WithSMTPAuth(mail.SMTPAuthPlain),
-		mail.WithSSL(),
+		os.Getenv(`MAILHOG_HOST`),
 		mail.WithPort(port),
-		mail.WithUsername(os.Getenv(`SMTP_USERNAME`)),
-		mail.WithPassword(os.Getenv(`SMTP_PASSWORD`)),
-		mail.WithTLSPolicy(mail.TLSMandatory),
+		mail.WithTLSPolicy(mail.NoTLS),
 	)
 	if err != nil {
-		logger.Log.Fatal(err, `failed to initialize mail client`)
+		logger.Log.Error(err)
+		return mailhog, err
 	}
 
-	logger.Log.Info(`Initialized mail client`)
+	mailhog.client = client
 
-	return &MailerService{
-		client: client,
-	}
+	return mailhog, nil
 }
 
-var (
-	ErrSendMail = errors.New(`failed to send email`)
-)
-
-func (ms *MailerService) SendMailText(to []string, cc []string, subject, message string) error {
+func (m *Mailhog) SendMailText(to []string, cc []string, subject, message string) error {
 	msg := mail.NewMsg()
 	err := msg.FromFormat(
 		os.Getenv(`SMTP_SENDER_NAME`),
@@ -71,18 +63,18 @@ func (ms *MailerService) SendMailText(to []string, cc []string, subject, message
 	msg.SetBodyString(mail.TypeTextPlain, message)
 	msg.SetImportance(mail.ImportanceHigh)
 
-	err = ms.client.DialAndSend(msg)
+	err = m.client.DialAndSend(msg)
 	if err != nil {
 		logger.Log.Error(err, ErrSendMail.Error())
 		return ErrSendMail
 	}
 
-	logger.Log.Info(`Email sent to: ` + strings.Join(to, ","))
+	logger.Log.Info(`email sent to: ` + strings.Join(to, ","))
 
 	return nil
 }
 
-func (ms *MailerService) SendMailHTML(to []string, cc []string, subject, htmlString string) error {
+func (m *Mailhog) SendMailHTML(to []string, cc []string, subject, htmlString string) error {
 	msg := mail.NewMsg()
 	err := msg.FromFormat(
 		os.Getenv(`SMTP_SENDER_NAME`),
@@ -106,13 +98,11 @@ func (ms *MailerService) SendMailHTML(to []string, cc []string, subject, htmlStr
 	msg.SetBodyString(mail.TypeTextHTML, htmlString)
 	msg.SetImportance(mail.ImportanceHigh)
 
-	err = ms.client.DialAndSend(msg)
+	err = m.client.DialAndSend(msg)
 	if err != nil {
 		logger.Log.Error(err, ErrSendMail.Error())
 		return ErrSendMail
 	}
-
-	logger.Log.Info(`Email sent to: ` + strings.Join(to, ","))
-
+	logger.Log.Info(`email sent to: ` + strings.Join(to, ","))
 	return nil
 }

@@ -19,7 +19,7 @@ func NewNotification(app *fiber.App) {
 	handler := &Notification{}
 
 	app.Route("/api/notification", func(router fiber.Router) {
-		router.Get("/user", mustLoggedInAjaxUnapproved, handler.ByUserId)
+		router.Get("/user", mustLoggedInAjax, handler.ByUserId)
 	})
 }
 
@@ -68,10 +68,34 @@ func (n *Notification) ByUserId(c *fiber.Ctx) error {
 
 				payload = GetSSEPayload(sessions.EventNewSession, string(dataBytes))
 			case sessions.EventNewSessionApproved:
-				dataBytes = []byte(msg.Payload)
+				var notifSession sessions.NotificationNewSessionApproved
+				err = json.Unmarshal([]byte(msg.Payload), &notifSession)
+				if err != nil {
+					logger.Log.Error(err)
+					continue
+				}
+
+				dataBytes, err = json.Marshal(notifSession.Data)
+				if err != nil {
+					logger.Log.Error(err)
+					continue
+				}
+
 				payload = GetSSEPayload(sessions.EventNewSessionApproved, string(dataBytes))
 			case sessions.EventNewSessionDeleted:
-				dataBytes = []byte(msg.Payload)
+				var notifSession sessions.NotificationNewSessionDeleted
+				err = json.Unmarshal([]byte(msg.Payload), &notifSession)
+				if err != nil {
+					logger.Log.Error(err)
+					continue
+				}
+
+				dataBytes, err = json.Marshal(notifSession.Data)
+				if err != nil {
+					logger.Log.Error(err)
+					continue
+				}
+
 				payload = GetSSEPayload(sessions.EventNewSessionDeleted, string(dataBytes))
 			default:
 				continue

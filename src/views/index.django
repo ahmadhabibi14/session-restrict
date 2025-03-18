@@ -103,6 +103,7 @@
   const EventNewSession = "new_session";
   const EventNewSessionApproved = `new_session_approved`;
   const EventNewSessionDeleted = `new_session_deleted`;
+
   async function fetchSSE() {
     const source = new EventSource("/api/notification/user");
 
@@ -124,8 +125,7 @@
       const dataRaw = evt.data;
       const sess = /** @type {Session} */ (JSON.parse(dataRaw));
 
-      const elmSessionsContainer =
-        document.getElementById("sessions-container");
+      const elmSessionsContainer = document.getElementById("sessions-container");
       const elmSessionContainer = document.createElement("div");
       elmSessionContainer.classList.add("session-container");
       elmSessionContainer.id = `session-${sess.access_token}`;
@@ -139,6 +139,12 @@
 
     source.addEventListener(EventNewSessionDeleted, (evt) => {
       console.log("[NEW SESSION DELETED] ", evt);
+
+      const dataRaw = evt.data;
+      const sess = /** @type {Session} */ (JSON.parse(dataRaw));
+
+      const elmSessionContainer = document.getElementById(`session-${sess.access_token}`);
+      elmSessionContainer.remove();
     });
   }
 

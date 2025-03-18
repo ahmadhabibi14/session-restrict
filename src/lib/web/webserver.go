@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
@@ -18,7 +19,7 @@ func NewWebserver() *fiber.App {
 	engine := django.New("./src/views", ".django")
 
 	return fiber.New(fiber.Config{
-		AppName:                 "Dummy Session Restriction",
+		AppName:                 os.Getenv("PROJECT_NAME"),
 		Views:                   engine,
 		Prefork:                 false,
 		JSONEncoder:             json.Marshal,

@@ -23,7 +23,7 @@ func HtmlOtpNewSessionLoggedIn(
         -moz-tab-size: 4;
         -o-tab-size: 4;
         tab-size: 4;
-        --blue-primary: #1187c9;
+        --blue-primary: #059669;
       }
       *::selection {
         background: var(--blue-primary);
@@ -77,29 +77,45 @@ func HtmlOtpNewSessionLoggedIn(
     "
   >
 		<article style="max-width: 600px; margin: auto">
-			<div style="height: 5px; background-color: #1187c9"></div>
+			<div style="height: 5px; background-color: #059669"></div>
 			<main style="padding: 20px 0 0 0">
 				<div style="padding: 0 10px; margin-top: 20px">
 					<b>Halo ` + userName + `!!</b>
           <p>Kami mendeteksi login baru ke akun Anda:
-          <p>
-						📅 Waktu : ` + timestamp + `<br>
-						🖥 Perangkat : ` + device + `<br>
-						🌐 Alamat IP : ` + ip + `<br>
-						🔑 Akses Token : ` + accessToken + `
-					</p>
+          <table border="1" cellspacing="0" cellpadding="8" style="border-collapse: collapse; width: 100%;">
+            <tr>
+                <td>📅</td>
+                <th style="text-align: left;">Waktu</th>
+                <td>` + timestamp + `</td>
+            </tr>
+            <tr>
+                <td>🖥</td>
+                <th style="text-align: left;">Perangkat</th>
+                <td>` + device + `</td>
+            </tr>
+            <tr>
+                <td>🌐</td>
+                <th style="text-align: left;">Alamat IP</th>
+                <td>` + ip + `</td>
+            </tr>
+            <tr>
+                <td>🔑</td>
+                <th style="text-align: left;">Akses Token</th>
+                <td>` + accessToken + `</td>
+            </tr>
+          </table>
 					<p>Jika ini memang Anda, tidak ada yang perlu dilakukan. Namun, jika ini bukan Anda, segera amankan akun Anda dengan:</p>
-					<center>
+					<center style="margin: 40px auto;">
 						<a
-							class="` + resetPasswordLink + `"
-							style="border-radius: 10px; padding: 8px 15px; background-color: #1187c9; color: #ffffff; font-weight: 600"
+							href="` + resetPasswordLink + `"
+							style="cursor: pointer; border-radius: 10px; padding: 8px 15px; background-color: #059669; color: #ffffff; font-weight: 600"
 						>
 							Reset Password
 						</a>
 					</center>
 				</div>
 			</main>
-			<div style="height: 5px; background-color: #1187c9"></div>
+			<div style="height: 5px; background-color: #059669"></div>
 		</article>
   </body>
 </html>

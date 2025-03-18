@@ -24,3 +24,9 @@ docker compose up -d
 ```bash
 dbmate up
 ```
+5. Start development
+```bash
+air
+
+pnpm dev
+```

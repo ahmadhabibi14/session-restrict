@@ -25,13 +25,13 @@ type NotificationNewSession struct {
 }
 
 type NotificationNewSessionApproved struct {
-	Event string `json:"event"`
-	Data  string `json:"data"`
+	Event string  `json:"event"`
+	Data  Session `json:"data"`
 }
 
 type NotificationNewSessionDeleted struct {
-	Event string `json:"event"`
-	Data  string `json:"data"`
+	Event string  `json:"event"`
+	Data  Session `json:"data"`
 }
 
 var ErrPublishNewSession = errors.New(`failed to send notification`)
@@ -55,12 +55,8 @@ func PublishNewSession(in NotificationNewSession, userId uint64) error {
 	return nil
 }
 
-func PublishNewSessionApproved(data string, userId uint64) error {
+func PublishNewSessionApproved(in NotificationNewSessionApproved, userId uint64) error {
 	channel := GetChannelUserNotif(userId)
-	in := NotificationNewSessionApproved{
-		Event: EventNewSessionApproved,
-		Data:  data,
-	}
 	dataByte, err := json.Marshal(in)
 	if err != nil {
 		logger.Log.Error(err)
@@ -78,12 +74,8 @@ func PublishNewSessionApproved(data string, userId uint64) error {
 	return nil
 }
 
-func PublishNewSessionDeleted(data string, userId uint64) error {
+func PublishNewSessionDeleted(in NotificationNewSessionDeleted, userId uint64) error {
 	channel := GetChannelUserNotif(userId)
-	in := NotificationNewSessionDeleted{
-		Event: EventNewSessionDeleted,
-		Data:  data,
-	}
 	dataByte, err := json.Marshal(in)
 	if err != nil {
 		logger.Log.Error(err)

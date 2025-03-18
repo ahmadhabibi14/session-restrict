@@ -24,9 +24,9 @@ func NewSession(app *fiber.App, srvSession *service.Session) {
 	handler := &Session{srvSession}
 
 	app.Route("/api/sessions", func(router fiber.Router) {
-		router.Get("/", mustLoggedInAjax, handler.GetSessions)
-		router.Patch("/approve", mustLoggedInAjax, handler.Approve)
-		router.Patch("/delete", mustLoggedInAjax, handler.Delete)
+		router.Get("/", mustLoggedInAjaxApproved, handler.GetSessions)
+		router.Patch("/approve", mustLoggedInAjaxApproved, handler.Approve)
+		router.Patch("/delete", mustLoggedInAjaxApproved, handler.Delete)
 	})
 }
 
@@ -130,7 +130,7 @@ func mustLoggedIn(c *fiber.Ctx) error {
 	return c.Next()
 }
 
-func mustLoggedInAjax(c *fiber.Ctx) error {
+func mustLoggedInAjaxApproved(c *fiber.Ctx) error {
 	accessToken := c.Cookies(CookieAccessToken)
 	if accessToken == `` {
 		return c.Status(http.StatusUnauthorized).JSON(response.ResponseCommon{
@@ -160,7 +160,7 @@ func mustLoggedInAjax(c *fiber.Ctx) error {
 	return c.Next()
 }
 
-func mustLoggedInAjaxUnapproved(c *fiber.Ctx) error {
+func mustLoggedInAjax(c *fiber.Ctx) error {
 	accessToken := c.Cookies(CookieAccessToken)
 	if accessToken == `` {
 		return c.Status(http.StatusUnauthorized).JSON(response.ResponseCommon{
